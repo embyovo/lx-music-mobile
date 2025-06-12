@@ -7,7 +7,7 @@ import { exitApp } from './utils/nativeModules/utils'
 import { windowSizeTools } from './utils/windowSizeTools'
 import { listenLaunchEvent } from './navigation/regLaunchedEvent'
 import { tipDialog } from './utils/tools'
-
+import('./ReactotronConfig.js').then(() => console.log('Reactotron Configured'),);
 console.log('starting app...')
 listenLaunchEvent()
 

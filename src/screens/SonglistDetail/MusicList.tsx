@@ -1,13 +1,14 @@
-import {forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState} from 'react'
-import OnlineList, { type OnlineListType, type OnlineListProps } from '@/components/OnlineList'
-import { clearListDetail, getListDetail, setListDetail, setListDetailInfo, setDailyListDetail} from '@/core/songlist'
+import React, {forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState} from 'react'
+import OnlineList, {type OnlineListProps, type OnlineListType} from '@/components/OnlineList'
+import {clearListDetail, getListDetail, setDailyListDetail, setListDetail, setListDetailInfo} from '@/core/songlist'
 import songlistState from '@/store/songlist/state'
-import { handlePlay } from './listAction'
-import Header, { type HeaderType } from './Header'
-import { useListInfo } from './state'
-import React, { createContext, useContext } from 'react';
+import {handlePlay} from './listAction'
+import Header, {type HeaderType} from './Header'
+import {useListInfo} from './state'
 import MyContext from "@/store/TopContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import {getSyncHost} from "@/utils/data.ts";
+
 export interface MusicListProps {
   componentId: string
 }
@@ -15,6 +16,13 @@ export interface MusicListProps {
 export interface MusicListType {
   loadList: (source: LX.OnlineSource, listId: string) => void
 }
+
+
+let host:string
+(async () => {
+  let hostT = await getSyncHost();
+  host = hostT.replace('lxsync', 'neteasyapi').replace(/\/+$/, '');
+})();
 
 
 export default forwardRef<MusicListType, MusicListProps>(({ componentId }, ref) => {
@@ -71,12 +79,11 @@ export default forwardRef<MusicListType, MusicListProps>(({ componentId }, ref) 
     const seconds = date.getUTCSeconds()
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
   }
-  let inMY=false
   async function fetchMusic(cookie: string) {
 
     try {
       const queryString = {'cookie':cookie}
-      const res = await fetch(`http://192.168.123.88:3000/recommend/songs?${new URLSearchParams(queryString)}`, {
+      const res = await fetch(`${host}/recommend/songs?${new URLSearchParams(queryString)}`, {
         method: 'GET',
       })
       const data1 = await res.json() // 等待 JSON 解析完成
@@ -117,12 +124,13 @@ export default forwardRef<MusicListType, MusicListProps>(({ componentId }, ref) 
         })
       })
 
-      const result={
+      // console.log(result)
+      return {
         list,
-        page:1,
-        limit:30,
-        total:30,
-        source:'wy',
+        page: 1,
+        limit: 30,
+        total: 30,
+        source: 'wy',
         info: {
           name: '亓的每日推荐',
           img: 'https://p2.music.126.net/6sAXHDiGgyAPbEMTIemVlw==/109951168110863128.jpg',
@@ -130,8 +138,6 @@ export default forwardRef<MusicListType, MusicListProps>(({ componentId }, ref) 
           author: '亓',
         },
       }
-      // console.log(result)
-      return result
     } catch (err) {
       console.error('获取音乐失败:', err)
     }
@@ -154,15 +160,16 @@ export default forwardRef<MusicListType, MusicListProps>(({ componentId }, ref) 
           playCount: '',
           imgUrl: 'https://p2.music.126.net/6sAXHDiGgyAPbEMTIemVlw==/109951168110863128.jpg',
         })
+
         if (isMusicUCookieExpired(store.cookie)) {
-          const res = (await fetch('http://192.168.123.88:3000/login/qr/key'))
+          const res = (await fetch(`${host}/login/qr/key`))
           const temp = await res.json()
           const key= temp.data.unikey
-          const res1 = await fetch(`http://192.168.123.88:3000/login/qr/create?key=${key}&qrimg=true`)
+          const res1 = await fetch(`${host}/login/qr/create?key=${key}&qrimg=true`)
           const temp2 = await res1.json()
           setStore(prevState => ({...prevState,qrcode: temp2.data.qrimg,showQR: true}));
           let intervalCheck = setInterval(async () => {
-            const res3 = await fetch(`http://192.168.123.88:3000/login/qr/check?key=${key}&&timestamp=${(Date.now()).toString()}`)
+            const res3 = await fetch(`${host}/login/qr/check?key=${key}&&timestamp=${(Date.now()).toString()}`)
             const temp3 = await res3.json()
             setTimeout(()=>{
               clearInterval(intervalCheck)
