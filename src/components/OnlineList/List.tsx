@@ -1,7 +1,5 @@
 import { useMemo, useRef, useState, forwardRef, useImperativeHandle } from 'react'
-import { FlatList, type FlatListProps, RefreshControl, View } from 'react-native'
-
-// import { useMusicList } from '@/store/list/hook'
+import {Button, DeviceEventEmitter, FlatList, type FlatListProps, Image, RefreshControl, View} from 'react-native'
 import ListItem, { ITEM_HEIGHT } from './ListItem'
 import { createStyle, getRowInfo, type RowInfoType } from '@/utils/tools'
 import type { Position } from './ListMenu'
@@ -13,7 +11,7 @@ import { useI18n } from '@/lang'
 import Text from '@/components/common/Text'
 import { handlePlay } from './listAction'
 import { useSettingValue } from '@/store/setting/hook'
-
+import Content from "@/store/TopContext"
 type FlatListType = FlatListProps<LX.Music.MusicInfoOnline>
 
 export type {
@@ -179,21 +177,51 @@ const List = forwardRef<ListType, ListProps>(({
     onLoadMore()
   }
 
+  const renderItem: FlatListType['renderItem'] = ({ item, index }) => {
 
-  const renderItem: FlatListType['renderItem'] = ({ item, index }) => (
-    <ListItem
-      item={item}
-      index={index}
-      showSource={showSource}
-      onPress={handlePress}
-      onLongPress={handleLongPress}
-      onShowMenu={onShowMenu}
-      selectedList={selectedList}
-      rowInfo={rowInfo.current}
-      isShowAlbumName={isShowAlbumName}
-      isShowInterval={isShowInterval}
-    />
-  )
+      return (
+        <Content.Consumer>
+          {
+            context => {
+              if (!(context.cookie==null && context.showQR)){
+                return(
+                  <ListItem
+                    item={item}
+                    index={index}
+                    showSource={showSource}
+                    onPress={handlePress}
+                    onLongPress={handleLongPress}
+                    onShowMenu={onShowMenu}
+                    selectedList={selectedList}
+                    rowInfo={rowInfo.current}
+                    isShowAlbumName={isShowAlbumName}
+                    isShowInterval={isShowInterval}
+                  />
+                )
+              }
+              else {
+                return (
+                  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+                    <Text style={{ marginBottom: 10 }}>{item.source+"|"+index}</Text>
+                    <Image
+                      alt="qrcode"
+                      source={{ uri: context.qrcode}}
+                      style={{ width: 200, height: 200 }}
+                    />
+                  </View>
+                );
+
+              }
+            }
+          }
+        </Content.Consumer>
+
+      );
+    }
+
+
+
+
   const getkey: FlatListType['keyExtractor'] = item => item.id
   const getItemLayout: FlatListType['getItemLayout'] = (data, index) => {
     return { length: ITEM_HEIGHT, offset: ITEM_HEIGHT * index, index }

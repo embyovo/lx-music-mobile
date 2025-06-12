@@ -1,5 +1,5 @@
 import { useRef, forwardRef, useImperativeHandle } from 'react'
-import { View } from 'react-native'
+import {Text, View} from 'react-native'
 // import LoadingMask, { LoadingMaskType } from '@/components/common/LoadingMask'
 import List, { type ListProps, type ListType, type Status, type RowInfoType } from './List'
 import ListMenu, { type ListMenuType, type Position, type SelectInfo } from './ListMenu'
@@ -8,6 +8,7 @@ import ListMusicAdd, { type MusicAddModalType as ListMusicAddType } from '@/comp
 import MultipleModeBar, { type MultipleModeBarType, type SelectMode } from './MultipleModeBar'
 import { handleDislikeMusic, handlePlay, handlePlayLater, handleShare, handleShowMusicSourceDetail } from './listAction'
 import { createStyle } from '@/utils/tools'
+import Context from  "@/store/TopContext"
 
 export interface OnlineListProps {
   onRefresh: ListProps['onRefresh']
@@ -81,19 +82,32 @@ export default forwardRef<OnlineListType, OnlineListProps>(({
   return (
     <View style={styles.container}>
       <View style={{ flex: 1 }}>
-        <List
-          ref={listRef}
-          onShowMenu={showMenu}
-          onMuiltSelectMode={hancelMultiSelect}
-          onSelectAll={isAll => multipleModeBarRef.current?.setIsSelectAll(isAll)}
-          onRefresh={onRefresh}
-          onLoadMore={onLoadMore}
-          onPlayList={onPlayList}
-          progressViewOffset={progressViewOffset}
-          ListHeaderComponent={ListHeaderComponent}
-          checkHomePagerIdle={checkHomePagerIdle}
-          rowType={rowType}
-        />
+        <Context.Consumer>{
+          context => {
+            return(
+              <Context.Provider value={context}>
+                <List
+                  ref={listRef}
+                  onShowMenu={showMenu}
+                  onMuiltSelectMode={hancelMultiSelect}
+                  onSelectAll={isAll => multipleModeBarRef.current?.setIsSelectAll(isAll)}
+                  onRefresh={onRefresh}
+                  onLoadMore={onLoadMore}
+                  onPlayList={onPlayList}
+                  progressViewOffset={progressViewOffset}
+                  ListHeaderComponent={ListHeaderComponent}
+                  checkHomePagerIdle={checkHomePagerIdle}
+                  rowType={rowType}
+                />
+              </Context.Provider>
+
+            )
+          }
+        }
+
+        </Context.Consumer>
+
+
         <MultipleModeBar
           ref={multipleModeBarRef}
           onSwitchMode={hancelSwitchSelectMode}

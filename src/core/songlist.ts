@@ -79,6 +79,17 @@ export const getList = async(source: LX.OnlineSource, tabId: string, sortId: str
 
   return musicSdk[source]?.songList.getList(sortId, tabId, page).then((result: ListInfo) => {
     cache.set(pageKey, result)
+    if (result.source == 'wy'){
+      result.list[0]={author: "亓",
+        desc: "亓的每日推荐~",
+        id: "-1",
+        img: "https://p2.music.126.net/6sAXHDiGgyAPbEMTIemVlw==/109951168110863128.jpg",
+        name: "亓的每日推荐",
+        play_count: "666666",
+        source: "wy",
+        time: new Date().getFullYear().toString() + '-' + (new Date().getMonth() + 1).toString() + '-' + (new Date().getDay() + 1).toString(),
+        "total": '30'}
+    }
     return result
     // if (pageKey != listInfo.key) return
     // setList(result, tabId, sortId, page)
@@ -158,7 +169,9 @@ export const setListDetailInfo: typeof songlistActions.setListDetailInfo = (sour
 export const setListDetail: typeof songlistActions.setListDetail = (result, id, page) => {
   return songlistActions.setListDetail(result, id, page)
 }
-
+export const setDailyListDetail: typeof songlistActions.setDailyListDetail = (result, id, page) => {
+  return songlistActions.setDailyListDetail(result, id, page)
+}
 export const clearListDetail = () => {
   songlistActions.clearListDetail()
 }

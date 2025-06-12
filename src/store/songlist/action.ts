@@ -23,6 +23,19 @@ export default {
 
     return state.listInfo
   },
+  setDailyListDetail(result: any, id: string, page: number){
+    state.listDetailInfo.list = page == 1 ? [...result.list] : [...state.listDetailInfo.list, ...result.list]
+    state.listDetailInfo.id = id
+    state.listDetailInfo.source = result.source
+    if (page == 1 || (result.total && result.list.length)) state.listDetailInfo.total = result.total
+    else state.listDetailInfo.total = result.limit * page
+    state.listDetailInfo.limit = result.limit
+    state.listDetailInfo.page = page
+    state.listDetailInfo.info = { ...result.info }
+    state.listDetailInfo.maxPage = Math.ceil(state.listDetailInfo.total / result.limit)
+
+    return state.listDetailInfo
+  },
   clearList() {
     state.listInfo.list = []
     state.listInfo.total = 0
@@ -35,6 +48,7 @@ export default {
     state.listDetailInfo.id = id
   },
   setListDetail(result: ListDetailInfo, id: string, page: number) {
+    console.log(result)
     state.listDetailInfo.list = page == 1 ? [...result.list] : [...state.listDetailInfo.list, ...result.list]
     state.listDetailInfo.id = id
     state.listDetailInfo.source = result.source
