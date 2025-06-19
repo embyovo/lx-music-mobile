@@ -21,6 +21,7 @@ export interface MusicListType {
 let host:string
 (async () => {
    host = await getSyncHost();
+  host=host.replace(/\/+$/, '');
 })();
 
 
@@ -202,6 +203,7 @@ export default forwardRef<MusicListType, MusicListProps>(({ componentId }, ref) 
       else{
         if (listDetailInfo.id == id && listDetailInfo.source == source && listDetailInfo.list.length) {
           requestAnimationFrame(() => {
+            listRef.current?.setStatus('loading')
             listRef.current?.setList(listDetailInfo.list)
             headerRef.current?.setInfo({
               name: (info.name || listDetailInfo.info.name) ?? '',
