@@ -145,12 +145,13 @@ export default forwardRef<MusicListType, MusicListProps>(({ componentId }, ref) 
   useImperativeHandle(ref, () => ({
     async loadList(source, id) {
       clearListDetail()
+
       const listDetailInfo = songlistState.listDetailInfo
       listRef.current?.setList([])
-
       if (source=='wy'&&id=='-1'){
-        // @ts-ignore
 
+        listRef.current?.setStatus('loading')
+        // @ts-ignore
         store.cookie = await AsyncStorage.getItem('cookie')
         setListDetailInfo('wy', '-1')
         headerRef.current?.setInfo({
@@ -203,7 +204,6 @@ export default forwardRef<MusicListType, MusicListProps>(({ componentId }, ref) 
       else{
         if (listDetailInfo.id == id && listDetailInfo.source == source && listDetailInfo.list.length) {
           requestAnimationFrame(() => {
-            listRef.current?.setStatus('loading')
             listRef.current?.setList(listDetailInfo.list)
             headerRef.current?.setInfo({
               name: (info.name || listDetailInfo.info.name) ?? '',
