@@ -13,6 +13,7 @@ import songlistState from '@/store/songlist/state'
 export const handlePlay = (musicInfo: LX.Music.MusicInfoOnline) => {
   // if (boardState.listDetailInfo.source)
   const listDetailInfo = songlistState.listDetailInfo
+  console.log('listDetailInfo', listDetailInfo)
   if (listDetailInfo.source=='wy'&&listDetailInfo.id=='-1'){
 
     const list =getListMusicSync(LIST_IDS.DEFAULT)

@@ -19,6 +19,9 @@ export default memo(() => {
   const info = useListInfo()
 
   const back = () => {
+    songlistState.listDetailInfo.id=''
+    songlistState.listDetailInfo.source='kw'
+    console.log(songlistState.listDetailInfo)
     void pop(commonState.componentIds.songlistDetail!)
   }
 
