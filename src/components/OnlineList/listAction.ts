@@ -18,8 +18,8 @@ export const handlePlay = (musicInfo: LX.Music.MusicInfoOnline) => {
 
     const list =getListMusicSync(LIST_IDS.DEFAULT)
     let ids=[]
-    if (list.length>200){
-      for (let i =list.length-1; i>200; i--){
+    if (list.length>=520){
+      for (let i =list.length-1; i>=520; i--){
         ids.push(list[i].id)
       }
       removeListMusics(LIST_IDS.DEFAULT, ids)
