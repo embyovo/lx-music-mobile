@@ -18,7 +18,7 @@ declare namespace LX {
 
     interface MyLoveListInfo {
       id: 'love'
-      name: '我的收藏'
+      name: '我的喜欢'
       // list: LX.Music.MusicInfo[]
     }
 

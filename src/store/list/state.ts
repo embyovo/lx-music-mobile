@@ -26,7 +26,7 @@ const state: InitState = {
   },
   loveList: {
     id: LIST_IDS.LOVE,
-    name: '我的收藏',
+    name: '我的喜欢',
   },
   tempList: {
     id: LIST_IDS.TEMP,

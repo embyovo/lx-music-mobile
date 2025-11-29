@@ -1,6 +1,6 @@
 import Event from './Event'
 
-import { saveUserList, removeListMusics, saveListMusics } from '@/utils/data'
+import {saveUserList, removeListMusics, saveListMusics, getSyncHost} from '@/utils/data'
 import {
   userLists,
   userListCreate,
@@ -20,6 +20,7 @@ import {
 import { LIST_IDS } from '@/config/constant'
 import { setActiveList, setUserList } from '@/core/list'
 import listState from '@/store/list/state'
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const updateUserList = async(userLists: LX.List.UserListInfo[]) => {
   await saveUserList(userLists)
@@ -167,6 +168,19 @@ export class ListEvent extends Event {
    * @param isRemote 是否属于远程操作
    */
   async list_music_add(listId: string, musicInfos: LX.Music.MusicInfo[], addMusicLocationType: LX.AddMusicLocationType, isRemote: boolean = false) {
+    const cookie = await AsyncStorage.getItem('cookie')
+    if (cookie&&listId.includes('userlist')){
+      const queryString = {'cookie':cookie}
+      for (const musicInfo of musicInfos) {
+        if (musicInfo.source=='wy'){
+          let host=  await getSyncHost();
+          host=host.replace(/\/+$/, '');
+          const id=(musicInfo.id).replace(/[^0-9]/g, '');
+          await fetch(`${host}/api/netease/like?id=${id}&${new URLSearchParams(queryString)}`,)
+        }
+
+      }
+    }
     const changedIds = await listMusicAdd(listId, musicInfos, addMusicLocationType)
     await checkUpdateList(changedIds)
     this.emit('list_music_add', listId, musicInfos, addMusicLocationType, isRemote)
