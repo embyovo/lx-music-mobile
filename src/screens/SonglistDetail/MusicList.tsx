@@ -132,9 +132,9 @@ export default forwardRef<MusicListType, MusicListProps>(({ componentId }, ref) 
         total: 30,
         source: 'wy',
         info: {
-          name: '亓的每日推荐',
-          img: 'https://p2.music.126.net/6sAXHDiGgyAPbEMTIemVlw==/109951168110863128.jpg',
-          desc: '亓的每日推荐',
+          name: '网易云每日推荐',
+          img: 'https://ts1.tc.mm.bing.net/th/id/OIP-C.JJ7JGWyXRFK0VfxjsCkrVQHaHa',
+          desc: '网易云每日推荐',
           author: '亓',
         },
       }
@@ -155,11 +155,11 @@ export default forwardRef<MusicListType, MusicListProps>(({ componentId }, ref) 
         store.cookie = await AsyncStorage.getItem('cookie')
         setListDetailInfo('wy', '-1')
         headerRef.current?.setInfo({
-          name: '亓的每日推荐',
+          name: '网易云每日推荐',
           // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-          desc: '亓的每日推荐',
+          desc: '网易云每日推荐',
           playCount: '',
-          imgUrl: 'https://p2.music.126.net/6sAXHDiGgyAPbEMTIemVlw==/109951168110863128.jpg',
+          imgUrl: 'https://ts1.tc.mm.bing.net/th/id/OIP-C.JJ7JGWyXRFK0VfxjsCkrVQHaHa',
         })
 
         if (isMusicUCookieExpired(store.cookie)) {
@@ -189,11 +189,11 @@ export default forwardRef<MusicListType, MusicListProps>(({ componentId }, ref) 
         if (isUnmountedRef.current) return
         requestAnimationFrame(() => {
           headerRef.current?.setInfo({
-            name: '亓的每日推荐',
+            name: '网易云每日推荐',
             // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-            desc: '亓的每日推荐',
+            desc: '网易云每日推荐',
             playCount: '',
-            imgUrl: 'https://p2.music.126.net/6sAXHDiGgyAPbEMTIemVlw==/109951168110863128.jpg',
+            imgUrl: 'https://ts1.tc.mm.bing.net/th/id/OIP-C.JJ7JGWyXRFK0VfxjsCkrVQHaHa',
           })
           // @ts-ignore
           listRef.current?.setList(result.list)
