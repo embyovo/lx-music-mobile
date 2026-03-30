@@ -16,13 +16,22 @@ export const handlePlay = (musicInfo: LX.Music.MusicInfoOnline) => {
   console.log('listDetailInfo', listDetailInfo)
   if (listDetailInfo.source=='wy'&&listDetailInfo.id=='-1'){
 
-    const list =getListMusicSync(LIST_IDS.DEFAULT)
-    let ids=[]
-    if (list.length>=520){
-      for (let i =list.length-1; i>=520; i--){
-        ids.push(list[i].id)
-      }
-      removeListMusics(LIST_IDS.DEFAULT, ids)
+// 同步获取歌单
+    const list = getListMusicSync(LIST_IDS.DEFAULT);
+    const EXCEED_LIMIT = 520;
+
+    const selectedIds = listDetailInfo.list.map(item => item.id)
+
+    const deleteSelectedIds = list
+      .filter(item => selectedIds.includes(item.id))
+      .map(item => item.id)
+
+    const exceedIds = list.length > EXCEED_LIMIT
+      ? list.slice(EXCEED_LIMIT).map(item => item.id)
+      : []
+    const finalDeleteIds = [...new Set([...deleteSelectedIds, ...exceedIds])]
+    if (finalDeleteIds.length > 0) {
+      removeListMusics(LIST_IDS.DEFAULT, finalDeleteIds);
     }
     void addListMusics(LIST_IDS.DEFAULT,listDetailInfo.list,settingState.setting['list.addMusicLocationType']).then(()=>{
       const index = getListMusicSync(LIST_IDS.DEFAULT).findIndex(m => m.id == musicInfo.id)
