@@ -15,6 +15,7 @@ import {
 import { getLocalFilePath } from '@/utils/music'
 import { readLyric, readPic } from '@/utils/localMediaMetadata'
 import { stat } from '@/utils/fs'
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const getOtherSourceByLocal = async<T>(musicInfo: LX.Music.MusicInfoLocal, handler: (infos: LX.Music.MusicInfoOnline[]) => Promise<T>) => {
   let result: LX.Music.MusicInfoOnline[] = []
@@ -80,7 +81,7 @@ export const getMusicUrl = async({ musicInfo, isRefresh, allowToggleSource = tru
   try {
    let host = await getSyncHost();
     host=host.replace(/\/+$/, '');
-    const cookie = localStorage.getItem('cookie') || ''
+    const cookie = await AsyncStorage.getItem('cookie')
     if (!cookie) {
       console.warn('⚠️ 未登录网易云，无法同步到云盘')
       return ""
