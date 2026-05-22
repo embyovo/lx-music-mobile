@@ -73,17 +73,18 @@ export const getMusicUrl = async({ musicInfo, isRefresh, allowToggleSource = tru
   onToggleSource?: (musicInfo?: LX.Music.MusicInfoOnline) => void
   allowToggleSource?: boolean
 }): Promise<string> => {
-  if (!isRefresh) {
-    const path = await getLocalFilePath(musicInfo)
-    // console.log(path)
-    if (path) return path
-  }
+
+  // if (!isRefresh) {
+  //   const path = await getLocalFilePath(musicInfo)
+  //   // console.log(path)
+  //   if (path) return path
+  // }
   try {
    let host = await getSyncHost();
     host=host.replace(/\/+$/, '');
-    const cookie = await AsyncStorage.getItem('cookie')
+    const cookie = await AsyncStorage.getItem('cookie') as string
     if (!cookie) {
-      console.warn('⚠️ 未登录网易云，无法同步到云盘')
+      console.warn('⚠️ 未登录网易云，无法播放云盘音乐')
       return ""
     }
     const queryString = {'cookie':cookie}
@@ -96,7 +97,8 @@ export const getMusicUrl = async({ musicInfo, isRefresh, allowToggleSource = tru
       method: 'GET',
     })
     const songDetail = ((await resSongDetail.json()).data)[0]
-
+    console.log()
+    console.log(songDetail.url)
     return songDetail.url
   }catch {}
   try {
