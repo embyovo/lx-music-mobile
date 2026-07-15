@@ -10,10 +10,10 @@ const defaultThemes = [
     name: '绿意盎然',
     isDark: false,
     config: {
-      primary: 'rgb(77, 175, 124)',
+      primary: 'rgb(0, 217, 132)',
       font: 'rgb(33, 33, 33)',
-      'c-app-background': 'var(c-primary-light-600-alpha-700)',
-      'c-main-background': 'rgba(255, 255, 255, 1)',
+      'c-app-background': 'rgba(236, 242, 245, 1)',
+      'c-main-background': 'rgba(244, 247, 249, 1)',
       'bg-image': '',
       'bg-image-position': 'center',
       'bg-image-size': 'cover',

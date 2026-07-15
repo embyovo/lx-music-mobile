@@ -10,7 +10,7 @@ import { scaleSizeH } from '@/utils/pixelRatio'
 import Text from '@/components/common/Text'
 import Badge from '@/components/common/Badge'
 
-export const ITEM_HEIGHT = scaleSizeH(LIST_ITEM_HEIGHT)
+export const ITEM_HEIGHT = scaleSizeH(LIST_ITEM_HEIGHT + 10)
 
 
 export default memo(({ item, index, activeIndex, onPress, onShowMenu, onLongPress, selectedList, rowInfo, isShowAlbumName, isShowInterval }: {
@@ -93,7 +93,8 @@ const styles = createStyle({
     flexDirection: 'row',
     flexWrap: 'nowrap',
     // paddingLeft: 10,
-    paddingRight: 2,
+    paddingRight: 4,
+    paddingHorizontal: 8,
     alignItems: 'center',
     // borderBottomWidth: BorderWidths.normal,
   },
@@ -105,7 +106,7 @@ const styles = createStyle({
     alignItems: 'center',
   },
   sn: {
-    width: 38,
+    width: 42,
     // fontSize: 12,
     textAlign: 'center',
     // backgroundColor: 'rgba(0,0,0,0.2)',
@@ -150,8 +151,8 @@ const styles = createStyle({
 
   moreButton: {
     height: '80%',
-    paddingLeft: 16,
-    paddingRight: 16,
+    paddingLeft: 14,
+    paddingRight: 14,
     // paddingTop: 10,
     // paddingBottom: 10,
     // backgroundColor: 'rgba(0,0,0,0.2)',

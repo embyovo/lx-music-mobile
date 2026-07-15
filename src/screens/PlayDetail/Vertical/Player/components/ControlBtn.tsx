@@ -10,24 +10,22 @@ import { BTN_WIDTH } from './MoreBtn/Btn'
 import { useMemo } from 'react'
 
 const PrevBtn = ({ size }: { size: number }) => {
-  const theme = useTheme()
   const handlePlayPrev = () => {
     void playPrev()
   }
   return (
     <TouchableOpacity style={{ ...styles.cotrolBtn, width: size, height: size }} activeOpacity={0.5} onPress={handlePlayPrev}>
-      <Icon name='prevMusic' color={theme['c-button-font']} rawSize={size * 0.7} />
+      <Icon name='prevMusic' color="#fff" rawSize={size * 0.7} />
     </TouchableOpacity>
   )
 }
 const NextBtn = ({ size }: { size: number }) => {
-  const theme = useTheme()
   const handlePlayNext = () => {
     void playNext()
   }
   return (
     <TouchableOpacity style={{ ...styles.cotrolBtn, width: size, height: size }} activeOpacity={0.5} onPress={handlePlayNext}>
-      <Icon name='nextMusic' color={theme['c-button-font']} rawSize={size * 0.7} />
+      <Icon name='nextMusic' color="#fff" rawSize={size * 0.7} />
     </TouchableOpacity>
   )
 }
@@ -36,8 +34,8 @@ const TogglePlayBtn = ({ size }: { size: number }) => {
   const theme = useTheme()
   const isPlay = useIsPlay()
   return (
-    <TouchableOpacity style={{ ...styles.cotrolBtn, width: size, height: size }} activeOpacity={0.5} onPress={togglePlay}>
-      <Icon name={isPlay ? 'pause' : 'play'} color={theme['c-button-font']} rawSize={size * 0.7} />
+    <TouchableOpacity style={{ ...styles.cotrolBtn, ...styles.toggleBtn, width: size, height: size, borderRadius: size / 2, backgroundColor: '#fff' }} activeOpacity={0.7} onPress={togglePlay}>
+      <Icon name={isPlay ? 'pause' : 'play'} color={theme['c-primary']} rawSize={size * 0.62} style={isPlay ? undefined : { transform: [{ translateX: size * 0.035 }] }} />
     </TouchableOpacity>
   )
 }
@@ -74,7 +72,7 @@ const styles = createStyle({
     flexGrow: 1,
     flexShrink: 1,
     paddingHorizontal: '4%',
-    paddingVertical: 22,
+    paddingVertical: 18,
     // backgroundColor: 'rgba(0, 0, 0, .1)',
   },
   cotrolBtn: {
@@ -84,5 +82,8 @@ const styles = createStyle({
     // backgroundColor: '#ccc',
     shadowOpacity: 1,
     textShadowRadius: 1,
+  },
+  toggleBtn: {
+    elevation: 5,
   },
 })

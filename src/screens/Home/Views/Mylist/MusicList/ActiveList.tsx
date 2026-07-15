@@ -1,18 +1,16 @@
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react'
-import { TouchableOpacity } from 'react-native'
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
+import { ScrollView, TouchableOpacity, View } from 'react-native'
 
 import { Icon } from '@/components/common/Icon'
 import { BorderWidths } from '@/theme'
 import { useTheme } from '@/store/theme/hook'
-import { useActiveListId, useListFetching } from '@/store/list/hook'
-import listState from '@/store/list/state'
+import { useActiveListId, useListFetching, useMusicList, useMyList } from '@/store/list/hook'
 import { createStyle } from '@/utils/tools'
 import { getListPrevSelectId } from '@/utils/data'
 import { setActiveList } from '@/core/list'
 import Text from '@/components/common/Text'
-import { LIST_IDS } from '@/config/constant'
 import Loading from '@/components/common/Loading'
-import { useSettingValue } from '@/store/setting/hook'
+import { playList } from '@/core/player/player'
 
 export interface ActiveListProps {
   onShowSearchBar: () => void
@@ -26,20 +24,8 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
   const theme = useTheme()
   const currentListId = useActiveListId()
   const fetching = useListFetching(currentListId)
-  const langId = useSettingValue('common.langId')
-  const currentListName = useMemo(() => {
-    switch (currentListId) {
-      case LIST_IDS.TEMP:
-        return global.i18n.t('list_name_temp')
-      case LIST_IDS.DEFAULT:
-        return global.i18n.t('list_name_default')
-      case LIST_IDS.LOVE:
-        return global.i18n.t('list_name_love')
-      default:
-        return listState.allList.find(l => l.id === currentListId)?.name ?? ''
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentListId, langId])
+  const musicList = useMusicList()
+  const allLists = useMyList()
   const [visibleBar, setVisibleBar] = useState(true)
 
   useImperativeHandle(ref, () => ({
@@ -51,6 +37,10 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
   const showList = () => {
     global.app_event.changeLoveListVisible(true)
   }
+  const playAll = () => {
+    if (!musicList.length) return
+    void playList(currentListId, 0)
+  }
 
   useEffect(() => {
     void getListPrevSelectId().then((id) => {
@@ -59,19 +49,104 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
   }, [])
 
   return (
-    <TouchableOpacity onPress={showList} onLongPress={onScrollToTop} style={{ ...styles.currentList, opacity: visibleBar ? 1 : 0, borderBottomColor: theme['c-border-background'] }}>
-      <Icon style={styles.currentListIcon} color={theme['c-button-font']} name="chevron-right" size={12} />
-      { fetching ? <Loading color={theme['c-button-font']} style={styles.loading} /> : null }
-      <Text style={styles.currentListText} numberOfLines={1} color={theme['c-button-font']}>{currentListName}</Text>
-      <TouchableOpacity style={styles.currentListBtns} onPress={onShowSearchBar}>
-        <Icon color={theme['c-button-font']} name="search-2" />
+    <View style={{ ...styles.header, opacity: visibleBar ? 1 : 0 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
+        {allLists.map(item => {
+          const active = item.id == currentListId
+          return (
+            <TouchableOpacity key={item.id} style={styles.listTab} onPress={() => { setActiveList(item.id) }}>
+              <Text size={15} numberOfLines={1} color={active ? theme['c-primary'] : theme['c-700']} style={active ? styles.tabText : undefined}>{item.name}</Text>
+              {active ? <View style={{ ...styles.listTabActive, backgroundColor: theme['c-primary'] }} /> : null}
+            </TouchableOpacity>
+          )
+        })}
+      </ScrollView>
+      <TouchableOpacity style={{ ...styles.search, backgroundColor: theme['c-000'] }} onPress={onShowSearchBar}>
+        <Icon color={theme['c-400']} name="search-2" size={18} />
+        <Text style={styles.searchText} color={theme['c-500']}>搜索我收藏的歌曲</Text>
       </TouchableOpacity>
-    </TouchableOpacity>
+      <View style={styles.toolbar}>
+        <TouchableOpacity style={styles.playAll} onPress={playAll} onLongPress={onScrollToTop}>
+          <View style={{ ...styles.playCircle, backgroundColor: theme['c-primary'] }}><Icon name="play" size={17} color="#10271e" /></View>
+          <Text size={16} style={styles.playText}>全部播放 ({musicList.length})</Text>
+        </TouchableOpacity>
+        {fetching ? <Loading color={theme['c-primary']} style={styles.loading} /> : null}
+        <TouchableOpacity style={styles.toolBtn} onPress={showList}><Icon name="album" size={19} color={theme['c-600']} /></TouchableOpacity>
+        <TouchableOpacity style={styles.toolBtn} onPress={onShowSearchBar}><Icon name="search-2" size={19} color={theme['c-600']} /></TouchableOpacity>
+      </View>
+    </View>
   )
 })
 
 
 const styles = createStyle({
+  header: {
+    paddingHorizontal: 14,
+    paddingBottom: 4,
+  },
+  tabs: {
+    height: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingRight: 8,
+  },
+  listTab: {
+    maxWidth: 132,
+    height: 34,
+    paddingHorizontal: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  listTabActive: {
+    position: 'absolute',
+    left: 10,
+    right: 10,
+    bottom: 1,
+    height: 3,
+    borderRadius: 2,
+  },
+  tabText: {
+    fontWeight: '700',
+  },
+  search: {
+    height: 38,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    marginVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  searchText: {
+    marginLeft: 9,
+  },
+  toolbar: {
+    height: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  playAll: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  playCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  playText: {
+    fontWeight: '700',
+    marginLeft: 10,
+  },
+  toolBtn: {
+    width: 42,
+    height: 42,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   currentList: {
     flexDirection: 'row',
     paddingRight: 2,

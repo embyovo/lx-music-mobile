@@ -54,9 +54,16 @@ export default () => {
       listRef.current?.loadList(searchState.searchText, searchInfo.current.source, type)
     }
     global.app_event.on('searchTypeChanged', handleTypeChange)
+    const handleHomeSearch = (id: string) => {
+      if (id != 'nav_search' || !searchState.searchText) return
+      headerBarRef.current?.setText(searchState.searchText)
+      listRef.current?.loadList(searchState.searchText, searchInfo.current.source, searchInfo.current.searchType)
+    }
+    global.state_event.on('navActiveIdUpdated', handleHomeSearch)
 
     return () => {
       global.app_event.off('searchTypeChanged', handleTypeChange)
+      global.state_event.off('navActiveIdUpdated', handleHomeSearch)
     }
   }, [])
 

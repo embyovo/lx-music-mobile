@@ -10,7 +10,7 @@ import { scaleSizeH } from '@/utils/pixelRatio'
 import { LIST_ITEM_HEIGHT } from '@/config/constant'
 import { createStyle, type RowInfo } from '@/utils/tools'
 
-export const ITEM_HEIGHT = scaleSizeH(LIST_ITEM_HEIGHT)
+export const ITEM_HEIGHT = scaleSizeH(LIST_ITEM_HEIGHT + 12)
 
 const useQualityTag = (musicInfo: LX.Music.MusicInfoOnline) => {
   const t = useI18n()
@@ -63,7 +63,7 @@ export default memo(({ item, index, showSource, onPress, onLongPress, onShowMenu
       <TouchableOpacity style={styles.listItemLeft} onPress={() => { onPress(item, index) }} onLongPress={() => { onLongPress(item, index) }}>
         <Text style={styles.sn} size={13} color={theme['c-300']}>{index + 1}</Text>
         <View style={styles.itemInfo}>
-          <Text numberOfLines={1}>{item.name}</Text>
+          <Text size={16} style={styles.title} numberOfLines={1}>{item.name}</Text>
           <View style={styles.listItemSingle}>
             { tagInfo.type ? <Badge type={tagInfo.type}>{tagInfo.text}</Badge> : null }
             { showSource ? <Badge type="tertiary">{item.source}</Badge> : null }
@@ -96,7 +96,8 @@ const styles = createStyle({
     flexDirection: 'row',
     flexWrap: 'nowrap',
     // paddingLeft: 10,
-    paddingRight: 2,
+    paddingRight: 4,
+    paddingHorizontal: 8,
     alignItems: 'center',
     // borderBottomWidth: BorderWidths.normal,
   },
@@ -108,7 +109,7 @@ const styles = createStyle({
     alignItems: 'center',
   },
   sn: {
-    width: 38,
+    width: 42,
     // fontSize: 12,
     textAlign: 'center',
     // backgroundColor: 'rgba(0,0,0,0.2)',
@@ -121,6 +122,9 @@ const styles = createStyle({
     paddingRight: 2,
     // paddingTop: 10,
     // paddingBottom: 10,
+  },
+  title: {
+    fontWeight: '600',
   },
   // listItemTitle: {
   //   // backgroundColor: 'rgba(0,0,0,0.2)',

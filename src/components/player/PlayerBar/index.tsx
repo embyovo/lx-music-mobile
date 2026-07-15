@@ -1,5 +1,5 @@
-import { memo, useMemo } from 'react'
-import { View } from 'react-native'
+import { memo, useEffect, useMemo, useRef } from 'react'
+import { Animated, View } from 'react-native'
 import { useKeyboard } from '@/utils/hooks'
 
 import Pic from './components/Pic'
@@ -17,9 +17,20 @@ export default memo(({ isHome = false }: { isHome?: boolean }) => {
   const { keyboardShown } = useKeyboard()
   const theme = useTheme()
   const autoHidePlayBar = useSettingValue('common.autoHidePlayBar')
+  const entrance = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    Animated.spring(entrance, {
+      toValue: 1,
+      damping: 18,
+      stiffness: 150,
+      mass: 0.8,
+      useNativeDriver: true,
+    }).start()
+  }, [entrance])
 
   const playerComponent = useMemo(() => (
-    <View style={{ ...styles.container, backgroundColor: theme['c-content-background'] }}>
+    <Animated.View style={{ ...styles.container, backgroundColor: theme['c-content-background'], opacity: entrance, transform: [{ translateY: entrance.interpolate({ inputRange: [0, 1], outputRange: [18, 0] }) }] }}>
       <Pic isHome={isHome} />
       <View style={styles.center}>
         <Title isHome={isHome} />
@@ -31,8 +42,8 @@ export default memo(({ isHome = false }: { isHome?: boolean }) => {
       <View style={styles.right}>
         <ControlBtn />
       </View>
-    </View>
-  ), [theme, isHome])
+    </Animated.View>
+  ), [entrance, theme, isHome])
 
   // console.log('render pb')
 
@@ -42,21 +53,23 @@ export default memo(({ isHome = false }: { isHome?: boolean }) => {
 
 const styles = createStyle({
   container: {
-    width: '100%',
+    alignSelf: 'stretch',
     // height: 100,
     // paddingTop: progressContentPadding,
     // marginTop: -progressContentPadding,
     // backgroundColor: 'rgba(0, 0, 0, .1)',
     // borderTopWidth: BorderWidths.normal2,
-    paddingVertical: 5,
-    paddingLeft: 5,
+    paddingVertical: 6,
+    paddingLeft: 7,
+    marginHorizontal: 12,
+    marginTop: 5,
+    marginBottom: 4,
     // backgroundColor: AppColors.primary,
     // backgroundColor: 'red',
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 6,
+    borderRadius: 17,
     flexDirection: 'row',
     alignItems: 'center',
-    elevation: 10,
+    elevation: 8,
   },
   left: {
     // borderRadius: 3,

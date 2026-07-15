@@ -52,7 +52,7 @@ export default forwardRef<HeaderBarType, HeaderBarProps>(({ onSourceChange, onTi
 
 
   return (
-    <View style={{ ...styles.searchBar, borderBottomColor: theme['c-border-background'] }}>
+    <View style={{ ...styles.searchBar, backgroundColor: theme['c-050'], borderColor: theme['c-100'] }}>
       <View style={styles.selector}>
         <SourceSelector ref={sourceSelectorRef} onSourceChange={onSourceChange} center />
       </View>
@@ -70,10 +70,15 @@ export default forwardRef<HeaderBarType, HeaderBarProps>(({ onSourceChange, onTi
 const styles = createStyle({
   searchBar: {
     flexDirection: 'row',
-    height: 38,
+    height: 42,
     zIndex: 2,
-    paddingRight: 10,
-    borderBottomWidth: BorderWidths.normal,
+    marginHorizontal: 14,
+    marginTop: 4,
+    marginBottom: 8,
+    paddingHorizontal: 8,
+    borderWidth: BorderWidths.normal,
+    borderRadius: 22,
+    overflow: 'hidden',
   },
   selector: {
     // width: 86,

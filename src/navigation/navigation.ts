@@ -188,8 +188,14 @@ export function pushPlayDetailScreen(componentId: string, skipAnimation = false)
               content: {
                 translationX: {
                   from: 0,
-                  to: windowSizeTools.getSize().width,
-                  duration: 300,
+                  to: windowSizeTools.getSize().width * 0.24,
+                  duration: 340,
+                  interpolation: { type: 'decelerate' },
+                },
+                alpha: {
+                  from: 1,
+                  to: 0,
+                  duration: 280,
                 },
               },
             },
@@ -289,13 +295,19 @@ export function pushSonglistDetailScreen(componentId: string, info: ListInfoItem
                   },
                 },
               ],
-              // content: {
-              //   alpha: {
-              //     from: 1,
-              //     to: 0,
-              //     duration: 200,
-              //   },
-              // },
+              content: {
+                translationX: {
+                  from: 0,
+                  to: windowSizeTools.getSize().width * 0.18,
+                  duration: 330,
+                  interpolation: { type: 'decelerate' },
+                },
+                alpha: {
+                  from: 1,
+                  to: 0,
+                  duration: 270,
+                },
+              },
             },
           },
         },
@@ -375,8 +387,14 @@ export function pushCommentScreen(componentId: string) {
               content: {
                 translationX: {
                   from: 0,
-                  to: windowSizeTools.getSize().width,
-                  duration: 300,
+                  to: windowSizeTools.getSize().width * 0.24,
+                  duration: 340,
+                  interpolation: { type: 'decelerate' },
+                },
+                alpha: {
+                  from: 1,
+                  to: 0,
+                  duration: 280,
                 },
               },
             },

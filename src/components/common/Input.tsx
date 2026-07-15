@@ -18,11 +18,11 @@ const styles = createStyle({
   input: {
     // backgroundColor: 'rgba(0,0,0,0.1)',
     // backgroundColor: 'white',
-    borderRadius: 2,
+    borderRadius: 16,
     paddingTop: 0,
     paddingBottom: 0,
     height: 32,
-    paddingLeft: 5,
+    paddingLeft: 10,
     paddingRight: 0,
     flexGrow: 1,
     flexShrink: 1,

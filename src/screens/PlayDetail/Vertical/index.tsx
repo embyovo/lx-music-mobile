@@ -1,5 +1,5 @@
-import { memo, useState, useRef, useMemo, useEffect } from 'react'
-import { View, AppState } from 'react-native'
+import { memo, useState, useRef, useMemo, useEffect, type ComponentRef } from 'react'
+import { View, AppState, ImageBackground } from 'react-native'
 
 import Header from './components/Header'
 // import Aside from './components/Aside'
@@ -11,7 +11,8 @@ import Lyric from './Lyric'
 import { screenkeepAwake, screenUnkeepAwake } from '@/utils/nativeModules/utils'
 import commonState, { type InitState as CommonState } from '@/store/common/state'
 import { createStyle } from '@/utils/tools'
-// import { useTheme } from '@/store/theme/hook'
+import { usePlayerMusicInfo } from '@/store/player/hook'
+import { defaultHeaders } from '@/components/common/Image'
 
 const LyricPage = ({ activeIndex }: { activeIndex: number }) => {
   const initedRef = useRef(false)
@@ -32,6 +33,17 @@ export default memo(({ componentId }: { componentId: string }) => {
   // const theme = useTheme()
   const [pageIndex, setPageIndex] = useState(0)
   const showLyricRef = useRef(false)
+  const pagerRef = useRef<ComponentRef<typeof PagerView>>(null)
+  const musicInfo = usePlayerMusicInfo()
+
+  const backgroundSource = useMemo(() => {
+    if (typeof musicInfo.pic == 'number') return musicInfo.pic
+    return musicInfo.pic ? { uri: musicInfo.pic, headers: defaultHeaders } : undefined
+  }, [musicInfo.pic])
+
+  const changePage = (index: number) => {
+    pagerRef.current?.setPage(index)
+  }
 
   const onPageSelected = ({ nativeEvent }: PagerViewOnPageSelectedEvent) => {
     setPageIndex(nativeEvent.position)
@@ -71,10 +83,12 @@ export default memo(({ componentId }: { componentId: string }) => {
   }, [])
 
   return (
-    <>
-      <Header />
+    <ImageBackground source={backgroundSource} blurRadius={34} style={styles.background}>
+      <View style={styles.backdrop}>
+      <Header pageIndex={pageIndex} onChangePage={changePage} />
       <View style={styles.container}>
         <PagerView
+          ref={pagerRef}
           onPageSelected={onPageSelected}
           // onPageScrollStateChanged={onPageScrollStateChanged}
           style={styles.pagerView}
@@ -92,11 +106,20 @@ export default memo(({ componentId }: { componentId: string }) => {
         </View> */}
         <Player />
       </View>
-    </>
+      </View>
+    </ImageBackground>
   )
 })
 
 const styles = createStyle({
+  background: {
+    flex: 1,
+    backgroundColor: '#1b2b21',
+  },
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(14, 24, 17, 0.62)',
+  },
   container: {
     flex: 1,
     flexDirection: 'column',

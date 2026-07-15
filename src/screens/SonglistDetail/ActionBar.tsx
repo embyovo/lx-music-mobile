@@ -3,27 +3,19 @@ import { View } from 'react-native'
 import Button from '@/components/common/Button'
 
 import { createStyle } from '@/utils/tools'
-import { pop } from '@/navigation'
 import { useTheme } from '@/store/theme/hook'
-import commonState from '@/store/common/state'
 import Text from '@/components/common/Text'
 import { handleCollect, handlePlay } from './listAction'
 import songlistState from '@/store/songlist/state'
 import { useI18n } from '@/lang'
 import { useListInfo } from './state'
+import { Icon } from '@/components/common/Icon'
 // import { NAV_SHEAR_NATIVE_IDS } from '@/config/constant'
 
 export default memo(() => {
   const theme = useTheme()
   const t = useI18n()
   const info = useListInfo()
-
-  const back = () => {
-    songlistState.listDetailInfo.id=''
-    songlistState.listDetailInfo.source='kw'
-    console.log(songlistState.listDetailInfo)
-    void pop(commonState.componentIds.songlistDetail!)
-  }
 
   const handlePlayAll = () => {
     if (!songlistState.listDetailInfo.info.name) return
@@ -37,14 +29,13 @@ export default memo(() => {
 
   return (
     <View style={styles.container}>
-      <Button onPress={handleCollection} style={styles.controlBtn}>
-        <Text style={{ ...styles.controlBtnText, color: theme['c-button-font'] }}>{t('collect_songlist')}</Text>
+      <Button onPress={handleCollection} style={{ ...styles.controlBtn, backgroundColor: theme['c-000'] }}>
+        <Icon name="love" size={19} color={theme['c-font']} />
+        <Text style={{ ...styles.controlBtnText, color: theme['c-font'] }}>{t('collect_songlist')}</Text>
       </Button>
-      <Button onPress={handlePlayAll} style={styles.controlBtn}>
-        <Text style={{ ...styles.controlBtnText, color: theme['c-button-font'] }}>{t('play_all')}</Text>
-      </Button>
-      <Button onPress={back} style={styles.controlBtn}>
-        <Text style={{ ...styles.controlBtnText, color: theme['c-button-font'] }}>{t('back')}</Text>
+      <Button onPress={handlePlayAll} style={{ ...styles.controlBtn, backgroundColor: theme['c-000'] }}>
+        <Icon name="play" size={19} color={theme['c-font']} />
+        <Text style={{ ...styles.controlBtnText, color: theme['c-font'] }}>{t('play_all')}</Text>
       </Button>
     </View>
   )
@@ -56,19 +47,26 @@ const styles = createStyle({
     width: '100%',
     flexGrow: 0,
     flexShrink: 0,
+    paddingHorizontal: 18,
+    paddingTop: 8,
+    paddingBottom: 10,
+    gap: 10,
   },
   controlBtn: {
     flexGrow: 1,
     flexShrink: 1,
     width: '33%',
-    paddingTop: 12,
-    paddingBottom: 12,
+    height: 52,
     paddingLeft: 10,
     paddingRight: 10,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 27,
+    gap: 9,
   },
   controlBtnText: {
     fontSize: 13,
     textAlign: 'center',
   },
 })
-

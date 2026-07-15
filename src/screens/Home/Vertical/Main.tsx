@@ -244,19 +244,25 @@ const Main = () => {
   }, [])
 
   useEffect(() => {
+    const updateScrollEnabled = (id: CommonState['navActiveId'] = commonState.navActiveId) => {
+      const enabled = settingState.setting['common.homePageScroll'] && id != 'nav_love'
+      pagerViewRef.current?.setScrollEnabled(enabled)
+    }
     const handleUpdate = (id: CommonState['navActiveId']) => {
       const index = viewMap[id]
       if (activeIndexRef.current == index) return
       activeIndexRef.current = index
-      pagerViewRef.current?.setPageWithoutAnimation(index)
+      pagerViewRef.current?.setPage(index)
+      updateScrollEnabled(id)
     }
     const handleConfigUpdate = (keys: Array<keyof LX.AppSetting>, setting: Partial<LX.AppSetting>) => {
       if (!keys.includes('common.homePageScroll')) return
-      pagerViewRef.current?.setScrollEnabled(setting['common.homePageScroll']!)
+      updateScrollEnabled()
     }
     // window.requestAnimationFrame(() => pagerViewRef.current && pagerViewRef.current.setPage(activeIndexRef.current))
     global.state_event.on('navActiveIdUpdated', handleUpdate)
     global.state_event.on('configUpdated', handleConfigUpdate)
+    updateScrollEnabled()
     return () => {
       global.state_event.off('navActiveIdUpdated', handleUpdate)
       global.state_event.off('configUpdated', handleConfigUpdate)
