@@ -94,7 +94,7 @@ export default memo(({ componentId }: { componentId: string }) => {
           style={styles.pagerView}
         >
           <View collapsable={false}>
-            <Pic componentId={componentId} />
+            <Pic componentId={componentId} onShowLyric={() => { changePage(1) }} />
           </View>
           <View collapsable={false}>
             <LyricPage activeIndex={pageIndex} />

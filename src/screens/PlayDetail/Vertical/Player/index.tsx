@@ -10,6 +10,7 @@ import { NAV_SHEAR_NATIVE_IDS } from '@/config/constant'
 import { usePlayerMusicInfo } from '@/store/player/hook'
 import Text from '@/components/common/Text'
 import { useWindowSize } from '@/utils/hooks'
+import { useSettingValue } from '@/store/setting/hook'
 
 const TrackInfo = () => {
   const musicInfo = usePlayerMusicInfo()
@@ -24,9 +25,10 @@ const TrackInfo = () => {
 
 export default memo(() => {
   const { height } = useWindowSize()
+  const isShowCoverLyric = useSettingValue('playDetail.isShowCoverLyric')
   const containerStyle = {
     ...styles.container,
-    paddingBottom: Math.max(48, height * 0.1),
+    paddingBottom: Math.max(48, height * (isShowCoverLyric ? 0.12 : 0.13)),
   }
   return (
     <View style={containerStyle} nativeID={NAV_SHEAR_NATIVE_IDS.playDetail_player}>

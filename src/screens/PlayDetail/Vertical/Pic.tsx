@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Animated, Easing, View } from 'react-native'
+import { Animated, Easing, TouchableOpacity, View } from 'react-native'
 // import { useLayout } from '@/utils/hooks'
 import { createStyle } from '@/utils/tools'
 import { useIsPlay, usePlayerMusicInfo } from '@/store/player/hook'
@@ -13,11 +13,12 @@ import commonState from '@/store/common/state'
 import playerState from '@/store/player/state'
 import { useLrcPlay, useLrcSet } from '@/plugins/lyric'
 import { AnimatedText } from '@/components/common/Text'
+import { useSettingValue } from '@/store/setting/hook'
 
 const VINYL_GROOVES = [0.96, 0.88, 0.80, 0.72, 0.66]
 const LYRIC_ROW_HEIGHT = 25
 
-const CompactLyric = () => {
+const CompactLyric = ({ onPress }: { onPress: () => void }) => {
   const lyricLines = useLrcSet()
   const { line } = useLrcPlay()
   const activeLine = Math.max(line, 0)
@@ -55,7 +56,7 @@ const CompactLyric = () => {
   if (!lyricLines[displayLine]?.text) return null
   const rows = [-1, 0, 1, 2]
   return (
-    <View style={styles.compactLyric}>
+    <TouchableOpacity style={styles.compactLyric} activeOpacity={0.82} onPress={onPress}>
       <View style={styles.lyricViewport}>
         <Animated.View style={{ transform: [{ translateY: shift.interpolate({ inputRange: [0, 1], outputRange: [0, -LYRIC_ROW_HEIGHT] }) }] }}>
           {rows.map(offset => {
@@ -63,10 +64,10 @@ const CompactLyric = () => {
             const isCurrent = offset == 0
             const isNext = offset == 1
             const opacity = isCurrent
-              ? shift.interpolate({ inputRange: [0, 1], outputRange: [1, 0.42] })
+              ? shift.interpolate({ inputRange: [0, 1], outputRange: [1, 0.12] })
               : isNext
-                ? shift.interpolate({ inputRange: [0, 1], outputRange: [0.52, 1] })
-                : 0.38
+                ? shift.interpolate({ inputRange: [0, 1], outputRange: [0.58, 1] })
+                : offset == -1 ? 0.12 : 0.30
             return (
               <Animated.View key={displayLine + offset} style={{ ...styles.lyricRow, opacity }}>
                 <AnimatedText size={14} color="#f1f2f1" style={styles.lyricText} numberOfLines={1}>{text ?? ''}</AnimatedText>
@@ -75,15 +76,16 @@ const CompactLyric = () => {
           })}
         </Animated.View>
       </View>
-    </View>
+    </TouchableOpacity>
   )
 }
 
 
-export default ({ componentId }: { componentId: string }) => {
+export default ({ componentId, onShowLyric }: { componentId: string, onShowLyric: () => void }) => {
   const musicInfo = usePlayerMusicInfo()
   const { width: winWidth, height: winHeight } = useWindowSize()
   const statusBarHeight = useStatusbarHeight()
+  const isShowCoverLyric = useSettingValue('playDetail.isShowCoverLyric')
   const isPlay = useIsPlay()
   const rotateValue = useRef(new Animated.Value(0)).current
   const entrance = useRef(new Animated.Value(0)).current
@@ -144,7 +146,9 @@ export default ({ componentId }: { componentId: string }) => {
   // console.log('render pic')
 
   const style = useMemo(() => {
-    const imgWidth = Math.min(winWidth * 0.88, (winHeight - statusBarHeight - HEADER_HEIGHT) * 0.54)
+    const imgWidth = isShowCoverLyric
+      ? Math.min(winWidth * 0.80, (winHeight - statusBarHeight - HEADER_HEIGHT) * 0.47)
+      : Math.min(winWidth * 0.84, (winHeight - statusBarHeight - HEADER_HEIGHT) * 0.51)
     return {
       disc: {
         width: imgWidth,
@@ -166,25 +170,28 @@ export default ({ componentId }: { componentId: string }) => {
         height: imgWidth * ratio,
         borderRadius: imgWidth * ratio / 2,
       })),
+      stageTransform: {
+        transform: [{ translateY: isShowCoverLyric ? -44 : -22 }],
+      },
     }
-  }, [statusBarHeight, winHeight, winWidth])
+  }, [isShowCoverLyric, statusBarHeight, winHeight, winWidth])
 
   return (
     <View style={styles.container}>
-      <View style={{ ...styles.stage, ...style.disc }}>
+      <View style={{ ...styles.stage, ...style.disc, ...style.stageTransform }}>
         <Animated.View style={{ ...styles.content, ...style.disc, elevation: animated ? 8 : 0, opacity: entrance, transform: [{ scale: entrance.interpolate({ inputRange: [0, 1], outputRange: [0.86, 1] }) }, { rotate: rotateValue.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }}>
           <View style={{ ...styles.outerRim, ...style.disc }} />
           <View style={styles.vinylSheen} />
           {style.grooves.map((groove, index) => <View key={index} style={{ ...styles.vinylGroove, ...groove }} />)}
           <Image url={pic} nativeID={NAV_SHEAR_NATIVE_IDS.playDetail_pic} style={style.image} />
         </Animated.View>
-        <Animated.View style={{ ...styles.tonearm, ...style.arm, transformOrigin: '50% 11px', transform: [{ rotate: armValue.interpolate({ inputRange: [0, 1], outputRange: ['-14deg', '27deg'] }) }] }}>
+        <Animated.View style={{ ...styles.tonearm, ...style.arm, transformOrigin: '50% 11px', transform: [{ rotate: armValue.interpolate({ inputRange: [0, 1], outputRange: ['-14deg', '10deg'] }) }] }}>
           <View style={styles.tonearmPivot} />
           <View style={styles.tonearmBar} />
           <View style={styles.tonearmNeedle} />
         </Animated.View>
       </View>
-      <CompactLyric />
+      {isShowCoverLyric ? <CompactLyric onPress={onShowLyric} /> : null}
     </View>
   )
 }
@@ -206,7 +213,6 @@ const styles = createStyle({
   stage: {
     justifyContent: 'center',
     alignItems: 'center',
-    transform: [{ translateY: -30 }],
   },
   outerRim: {
     position: 'absolute',
@@ -256,7 +262,7 @@ const styles = createStyle({
     position: 'absolute',
     left: 28,
     right: 28,
-    bottom: 8,
+    bottom: 18,
     height: 91,
     paddingHorizontal: 24,
     paddingVertical: 8,

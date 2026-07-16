@@ -232,6 +232,11 @@ declare global {
       'playDetail.isShowLyricProgressSetting': boolean
 
       /**
+       * 播放详情封面页是否显示紧凑歌词
+       */
+      'playDetail.isShowCoverLyric': boolean
+
+      /**
        * 是否启用桌面歌词
        */
       'desktopLyric.enable': boolean

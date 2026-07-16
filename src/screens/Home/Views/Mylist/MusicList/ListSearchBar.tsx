@@ -7,7 +7,7 @@ import Input, { type InputType } from '@/components/common/Input'
 import { useTheme } from '@/store/theme/hook'
 import { useI18n } from '@/lang'
 import { createStyle } from '@/utils/tools'
-import { BorderWidths } from '@/theme'
+import { Icon } from '@/components/common/Icon'
 
 interface SearchInputProps {
   onSearch: (keywork: string) => void
@@ -16,6 +16,7 @@ type SearchInputType = InputType
 
 const SearchInput = forwardRef<SearchInputType, SearchInputProps>(({ onSearch }, ref) => {
   const [text, setText] = useState('')
+  const theme = useTheme()
 
   const handleChangeText = (text: string) => {
     setText(text)
@@ -23,15 +24,17 @@ const SearchInput = forwardRef<SearchInputType, SearchInputProps>(({ onSearch },
   }
 
   return (
-    <Input
-      onChangeText={handleChangeText}
-      placeholder="Search for something..."
-      value={text}
-      style={styles.input}
-      // onFocus={showTipList}
-      clearBtn
-      ref={ref}
-    />
+    <View style={{ ...styles.searchField, backgroundColor: theme['c-000'], borderColor: theme['c-border-background'] }}>
+      <Icon name="search-2" size={18} color={theme['c-400']} />
+      <Input
+        onChangeText={handleChangeText}
+        placeholder="搜索我收藏的歌曲"
+        value={text}
+        style={styles.input}
+        clearBtn
+        ref={ref}
+      />
+    </View>
   )
 })
 
@@ -74,17 +77,17 @@ export default forwardRef<ListSearchBarType, ListSearchBarProps>(({ onSearch, on
     setVisible(true)
     setAnimatPlayed(false)
     requestAnimationFrame(() => {
-      animTranslateY.setValue(-20)
+      animTranslateY.setValue(-10)
 
       Animated.parallel([
         Animated.timing(animFade, {
-          toValue: 0.92,
-          duration: 200,
+          toValue: 1,
+          duration: 240,
           useNativeDriver: true,
         }),
         Animated.timing(animTranslateY, {
           toValue: 0,
-          duration: 200,
+          duration: 240,
           useNativeDriver: true,
         }),
       ]).start(() => {
@@ -98,12 +101,12 @@ export default forwardRef<ListSearchBarType, ListSearchBarProps>(({ onSearch, on
     Animated.parallel([
       Animated.timing(animFade, {
         toValue: 0,
-        duration: 200,
+        duration: 180,
         useNativeDriver: true,
       }),
       Animated.timing(animTranslateY, {
-        toValue: -20,
-        duration: 200,
+        toValue: -10,
+        duration: 180,
         useNativeDriver: true,
       }),
     ]).start(finished => {
@@ -116,8 +119,7 @@ export default forwardRef<ListSearchBarType, ListSearchBarProps>(({ onSearch, on
 
   const animaStyle = useMemo(() => ({
     ...styles.container,
-    // backgroundColor: theme['c-content-background'],
-    borderBottomColor: theme['c-border-background'],
+    backgroundColor: theme['c-main-background'],
     opacity: animFade, // Bind opacity to animated value
     transform: [
       { translateY: animTranslateY },
@@ -131,7 +133,7 @@ export default forwardRef<ListSearchBarType, ListSearchBarProps>(({ onSearch, on
           <SearchInput ref={searchInputRef} onSearch={onSearch} />
         </View>
         <TouchableOpacity onPress={onExitSearch} style={styles.btn}>
-          <Text color={theme['c-button-font']}>{t('list_select_cancel')}</Text>
+          <Text size={14} color={theme['c-primary']} style={styles.cancelText}>{t('list_select_cancel')}</Text>
         </TouchableOpacity>
       </Animated.View>
     )
@@ -149,21 +151,37 @@ const styles = createStyle({
     width: '100%',
     height: '100%',
     flexDirection: 'row',
-    paddingLeft: 10,
-    borderBottomWidth: BorderWidths.normal,
+    paddingHorizontal: 14,
+    paddingTop: 8,
+    alignItems: 'flex-start',
   },
   content: {
     flexDirection: 'row',
     flex: 1,
+    height: 42,
+  },
+  searchField: {
+    flex: 1,
+    height: 42,
+    borderRadius: 22,
+    borderWidth: 0.5,
+    paddingLeft: 14,
+    paddingRight: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   input: {
-    height: '100%',
+    height: 42,
+    paddingLeft: 9,
   },
   btn: {
-    // flex: 1,
-    paddingLeft: 15,
-    paddingRight: 15,
+    height: 42,
+    paddingLeft: 14,
+    paddingRight: 2,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  cancelText: {
+    fontWeight: '600',
   },
 })
