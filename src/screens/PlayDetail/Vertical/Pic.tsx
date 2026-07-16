@@ -10,6 +10,7 @@ import { HEADER_HEIGHT } from './components/Header'
 import Image from '@/components/common/Image'
 import { useStatusbarHeight } from '@/store/common/hook'
 import commonState from '@/store/common/state'
+import playerState from '@/store/player/state'
 
 const VINYL_GROOVES = [0.96, 0.88, 0.80, 0.72, 0.66]
 
@@ -33,6 +34,8 @@ export default ({ componentId }: { componentId: string }) => {
 
   useNavigationComponentDidAppear(componentId, () => {
     setAnimated(true)
+    armValue.stopAnimation()
+    armValue.setValue(playerState.isPlay ? 1 : 0)
   })
 
   useEffect(() => {
@@ -110,7 +113,7 @@ export default ({ componentId }: { componentId: string }) => {
           {style.grooves.map((groove, index) => <View key={index} style={{ ...styles.vinylGroove, ...groove }} />)}
           <Image url={pic} nativeID={NAV_SHEAR_NATIVE_IDS.playDetail_pic} style={style.image} />
         </Animated.View>
-        <Animated.View style={{ ...styles.tonearm, ...style.arm, transformOrigin: '50% 11px', transform: [{ rotate: armValue.interpolate({ inputRange: [0, 1], outputRange: ['10deg', '-28deg'] }) }] }}>
+        <Animated.View style={{ ...styles.tonearm, ...style.arm, transformOrigin: '50% 11px', transform: [{ rotate: armValue.interpolate({ inputRange: [0, 1], outputRange: ['-14deg', '27deg'] }) }] }}>
           <View style={styles.tonearmPivot} />
           <View style={styles.tonearmBar} />
           <View style={styles.tonearmNeedle} />
