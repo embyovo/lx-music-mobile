@@ -1,5 +1,5 @@
 import { memo, useMemo, useEffect, useRef, useCallback } from 'react'
-import { View, FlatList, type FlatListProps, type LayoutChangeEvent, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native'
+import { Animated, View, FlatList, type FlatListProps, type LayoutChangeEvent, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native'
 // import { useLayout } from '@/utils/hooks'
 import { type Line, useLrcPlay, useLrcSet } from '@/plugins/lyric'
 import { createStyle } from '@/utils/tools'
@@ -9,7 +9,6 @@ import { useSettingValue } from '@/store/setting/hook'
 import { AnimatedColorText } from '@/components/common/Text'
 import { setSpText } from '@/utils/pixelRatio'
 import playerState from '@/store/player/state'
-import { scrollTo } from '@/utils/scroll'
 import PlayLine, { type PlayLineType } from '../components/PlayLine'
 // import { screenkeepAwake } from '@/utils/nativeModules/utils'
 // import { log } from '@/utils/log'
@@ -67,9 +66,10 @@ const LrcLine = memo(({ line, lineNum, activeLine, onLayout }: LineProps) => {
   const lrcFontSize = useSettingValue('playDetail.vertical.style.lrcFontSize')
   const size = lrcFontSize / 10
   const lineHeight = setSpText(size) * 1.3
+  const active = activeLine == lineNum
+  const focusValue = useRef(new Animated.Value(active ? 1 : 0)).current
 
   const colors = useMemo(() => {
-    const active = activeLine == lineNum
     return active ? [
       theme['c-primary'],
       theme['c-primary-alpha-200'],
@@ -79,7 +79,17 @@ const LrcLine = memo(({ line, lineNum, activeLine, onLayout }: LineProps) => {
       theme['c-300'],
       0.6,
     ] as const
-  }, [activeLine, lineNum, theme])
+  }, [active, theme])
+
+  useEffect(() => {
+    Animated.spring(focusValue, {
+      toValue: active ? 1 : 0,
+      damping: 18,
+      stiffness: 150,
+      mass: 0.7,
+      useNativeDriver: true,
+    }).start()
+  }, [active, focusValue])
 
   const handleLayout = ({ nativeEvent }: LayoutChangeEvent) => {
     onLayout(lineNum, nativeEvent.layout.height, nativeEvent.layout.width)
@@ -89,7 +99,7 @@ const LrcLine = memo(({ line, lineNum, activeLine, onLayout }: LineProps) => {
   // textBreakStrategy="simple" 用于解决某些设备上字体被截断的问题
   // https://stackoverflow.com/a/72822360
   return (
-    <View style={styles.line} onLayout={handleLayout}>
+    <Animated.View style={{ ...styles.line, transform: [{ translateY: focusValue.interpolate({ inputRange: [0, 1], outputRange: [3, 0] }) }, { scale: focusValue.interpolate({ inputRange: [0, 1], outputRange: [0.975, 1] }) }] }} onLayout={handleLayout}>
       <AnimatedColorText style={{
         ...styles.lineText,
         textAlign: 'center',
@@ -104,7 +114,7 @@ const LrcLine = memo(({ line, lineNum, activeLine, onLayout }: LineProps) => {
           }} textBreakStrategy="simple" key={index} color={colors[1]} opacity={colors[2]} size={size * 0.8}>{lrc}</AnimatedColorText>)
         })
       }
-    </View>
+    </Animated.View>
   )
 }, (prevProps, nextProps) => {
   return prevProps.line === nextProps.line &&
@@ -125,7 +135,6 @@ export default () => {
   const isFirstSetLrc = useRef(true)
   const scrollInfoRef = useRef<NativeSyntheticEvent<NativeScrollEvent>['nativeEvent'] | null>(null)
   const listLayoutInfoRef = useRef<{ spaceHeight: number, lineHeights: number[] }>({ spaceHeight: 0, lineHeights: [] })
-  const scrollCancelRef = useRef<(() => void) | null>(null)
   const isShowLyricProgressSetting = useSettingValue('playDetail.isShowLyricProgressSetting')
   // useLock()
   // const [imgUrl, setImgUrl] = useState(null)
@@ -151,15 +160,12 @@ export default () => {
         }
         offset += (listLayoutInfoRef.current.lineHeights[line] ?? 0) / 2
         try {
-          scrollCancelRef.current = scrollTo(flatListRef.current, scrollInfoRef.current, offset - scrollInfoRef.current.layoutMeasurement.height * 0.42, 600, () => {
-            scrollCancelRef.current = null
+          flatListRef.current.scrollToOffset({
+            offset: Math.max(0, offset - scrollInfoRef.current.layoutMeasurement.height * 0.42),
+            animated: true,
           })
         } catch {}
       } else {
-        if (scrollCancelRef.current) {
-          scrollCancelRef.current()
-          scrollCancelRef.current = null
-        }
         try {
           flatListRef.current.scrollToIndex({
             index,
@@ -187,10 +193,6 @@ export default () => {
     if (scrollTimoutRef.current) {
       clearTimeout(scrollTimoutRef.current)
       scrollTimoutRef.current = null
-    }
-    if (scrollCancelRef.current) {
-      scrollCancelRef.current()
-      scrollCancelRef.current = null
     }
   }
 
@@ -260,10 +262,7 @@ export default () => {
       return
     }
 
-    delayScrollTimeout.current = setTimeout(() => {
-      delayScrollTimeout.current = null
-      handleScrollToActive()
-    }, 600)
+    requestAnimationFrame(() => { handleScrollToActive() })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [line])
 

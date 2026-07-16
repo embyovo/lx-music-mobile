@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Animated, Easing, View } from 'react-native'
 // import { useLayout } from '@/utils/hooks'
 import { createStyle } from '@/utils/tools'
@@ -11,8 +11,73 @@ import Image from '@/components/common/Image'
 import { useStatusbarHeight } from '@/store/common/hook'
 import commonState from '@/store/common/state'
 import playerState from '@/store/player/state'
+import { useLrcPlay, useLrcSet } from '@/plugins/lyric'
+import { AnimatedText } from '@/components/common/Text'
 
 const VINYL_GROOVES = [0.96, 0.88, 0.80, 0.72, 0.66]
+const LYRIC_ROW_HEIGHT = 25
+
+const CompactLyric = () => {
+  const lyricLines = useLrcSet()
+  const { line } = useLrcPlay()
+  const activeLine = Math.max(line, 0)
+  const [displayLine, setDisplayLine] = useState(activeLine)
+  const shift = useRef(new Animated.Value(0)).current
+  const pendingResetRef = useRef(false)
+
+  useLayoutEffect(() => {
+    if (!pendingResetRef.current) return
+    pendingResetRef.current = false
+    shift.setValue(0)
+  }, [displayLine, shift])
+
+  useEffect(() => {
+    if (activeLine == displayLine) return
+    shift.stopAnimation()
+    if (activeLine != displayLine + 1) {
+      shift.setValue(0)
+      setDisplayLine(activeLine)
+      return
+    }
+    shift.setValue(0)
+    Animated.timing(shift, {
+      toValue: 1,
+      duration: 440,
+      easing: Easing.inOut(Easing.cubic),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (!finished) return
+      pendingResetRef.current = true
+      setDisplayLine(activeLine)
+    })
+  }, [activeLine, displayLine, shift])
+
+  if (!lyricLines[displayLine]?.text) return null
+  const rows = [-1, 0, 1, 2]
+  return (
+    <View style={styles.compactLyric}>
+      <View style={styles.lyricViewport}>
+        <Animated.View style={{ transform: [{ translateY: shift.interpolate({ inputRange: [0, 1], outputRange: [0, -LYRIC_ROW_HEIGHT] }) }] }}>
+          {rows.map(offset => {
+            const text = lyricLines[displayLine + offset]?.text
+            const isCurrent = offset == 0
+            const isNext = offset == 1
+            const opacity = isCurrent
+              ? shift.interpolate({ inputRange: [0, 1], outputRange: [1, 0.42] })
+              : isNext
+                ? shift.interpolate({ inputRange: [0, 1], outputRange: [0.52, 1] })
+                : 0.38
+            return (
+              <Animated.View key={displayLine + offset} style={{ ...styles.lyricRow, opacity }}>
+                <AnimatedText size={14} color="#f1f2f1" style={styles.lyricText} numberOfLines={1}>{text ?? ''}</AnimatedText>
+              </Animated.View>
+            )
+          })}
+        </Animated.View>
+      </View>
+    </View>
+  )
+}
 
 
 export default ({ componentId }: { componentId: string }) => {
@@ -79,7 +144,7 @@ export default ({ componentId }: { componentId: string }) => {
   // console.log('render pic')
 
   const style = useMemo(() => {
-    const imgWidth = Math.min(winWidth * 0.84, (winHeight - statusBarHeight - HEADER_HEIGHT) * 0.52)
+    const imgWidth = Math.min(winWidth * 0.88, (winHeight - statusBarHeight - HEADER_HEIGHT) * 0.54)
     return {
       disc: {
         width: imgWidth,
@@ -119,6 +184,7 @@ export default ({ componentId }: { componentId: string }) => {
           <View style={styles.tonearmNeedle} />
         </Animated.View>
       </View>
+      <CompactLyric />
     </View>
   )
 }
@@ -140,6 +206,7 @@ const styles = createStyle({
   stage: {
     justifyContent: 'center',
     alignItems: 'center',
+    transform: [{ translateY: -30 }],
   },
   outerRim: {
     position: 'absolute',
@@ -184,5 +251,33 @@ const styles = createStyle({
     height: 18,
     borderRadius: 4,
     backgroundColor: '#f5f5f2',
+  },
+  compactLyric: {
+    position: 'absolute',
+    left: 28,
+    right: 28,
+    bottom: 8,
+    height: 91,
+    paddingHorizontal: 24,
+    paddingVertical: 8,
+    borderRadius: 22,
+    backgroundColor: 'rgba(17,23,19,0.20)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.055)',
+    overflow: 'hidden',
+  },
+  lyricRow: {
+    height: LYRIC_ROW_HEIGHT,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  lyricViewport: {
+    width: '100%',
+    height: LYRIC_ROW_HEIGHT * 3,
+    overflow: 'hidden',
+  },
+  lyricText: {
+    width: '100%',
+    textAlign: 'center',
   },
 })

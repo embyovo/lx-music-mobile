@@ -9,21 +9,27 @@ import { createStyle } from '@/utils/tools'
 import { NAV_SHEAR_NATIVE_IDS } from '@/config/constant'
 import { usePlayerMusicInfo } from '@/store/player/hook'
 import Text from '@/components/common/Text'
+import { useWindowSize } from '@/utils/hooks'
 
 const TrackInfo = () => {
   const musicInfo = usePlayerMusicInfo()
   return (
     <View style={styles.trackInfo}>
-      <Text size={20} color="#fff" style={styles.trackName} numberOfLines={1}>{musicInfo.name}</Text>
-      <Text size={13} color="rgba(255,255,255,0.68)" numberOfLines={1}>{musicInfo.singer}</Text>
+      <Text size={24} color="#f1f2f1" style={styles.trackName} numberOfLines={1}>{musicInfo.name}</Text>
+      <Text size={14} color="rgba(225,228,226,0.72)" numberOfLines={1}>{musicInfo.singer}</Text>
     </View>
   )
 }
 
 
 export default memo(() => {
+  const { height } = useWindowSize()
+  const containerStyle = {
+    ...styles.container,
+    paddingBottom: Math.max(48, height * 0.1),
+  }
   return (
-    <View style={styles.container} nativeID={NAV_SHEAR_NATIVE_IDS.playDetail_player}>
+    <View style={containerStyle} nativeID={NAV_SHEAR_NATIVE_IDS.playDetail_player}>
       <TrackInfo />
       <PlayInfo />
       <ControlBtn />
@@ -40,14 +46,13 @@ const styles = createStyle({
     // marginTop: -progressContentPadding,
     // backgroundColor: 'rgba(0, 0, 0, .1)',
     paddingHorizontal: 20,
-    paddingBottom: 18,
-    paddingTop: 5,
+    paddingTop: 2,
     // backgroundColor: AppColors.primary,
     // backgroundColor: 'red',
     flexDirection: 'column',
   },
   trackInfo: {
-    paddingBottom: 8,
+    paddingBottom: 10,
   },
   trackName: {
     fontWeight: '700',

@@ -25,6 +25,7 @@ const styles = createStyle({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
+    transform: [{ translateY: 28 }],
     // backgroundColor: 'rgba(0,0,0,0.1)',
   },
 })

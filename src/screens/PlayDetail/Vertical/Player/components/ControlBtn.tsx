@@ -1,6 +1,5 @@
 import { TouchableOpacity, View } from 'react-native'
 import { Icon } from '@/components/common/Icon'
-import { useTheme } from '@/store/theme/hook'
 // import { useIsPlay } from '@/store/player/hook'
 import { playNext, playPrev, togglePlay } from '@/core/player/player'
 import { useIsPlay } from '@/store/player/hook'
@@ -15,7 +14,7 @@ const PrevBtn = ({ size }: { size: number }) => {
   }
   return (
     <TouchableOpacity style={{ ...styles.cotrolBtn, width: size, height: size }} activeOpacity={0.5} onPress={handlePlayPrev}>
-      <Icon name='prevMusic' color="#fff" rawSize={size * 0.7} />
+      <Icon name='prevMusic' color="#d2d5d2" rawSize={size * 0.7} />
     </TouchableOpacity>
   )
 }
@@ -25,27 +24,26 @@ const NextBtn = ({ size }: { size: number }) => {
   }
   return (
     <TouchableOpacity style={{ ...styles.cotrolBtn, width: size, height: size }} activeOpacity={0.5} onPress={handlePlayNext}>
-      <Icon name='nextMusic' color="#fff" rawSize={size * 0.7} />
+      <Icon name='nextMusic' color="#d2d5d2" rawSize={size * 0.7} />
     </TouchableOpacity>
   )
 }
 
 const TogglePlayBtn = ({ size }: { size: number }) => {
-  const theme = useTheme()
   const isPlay = useIsPlay()
   return (
-    <TouchableOpacity style={{ ...styles.cotrolBtn, ...styles.toggleBtn, width: size, height: size, borderRadius: size / 2, backgroundColor: '#fff' }} activeOpacity={0.7} onPress={togglePlay}>
-      <Icon name={isPlay ? 'pause' : 'play'} color={theme['c-primary']} rawSize={size * 0.62} style={isPlay ? undefined : { transform: [{ translateX: size * 0.035 }] }} />
+    <TouchableOpacity style={{ ...styles.cotrolBtn, width: size, height: size }} activeOpacity={0.55} onPress={togglePlay}>
+      <Icon name={isPlay ? 'pause' : 'play'} color="#d2d5d2" rawSize={size * 0.8} style={isPlay ? undefined : { transform: [{ translateX: size * 0.035 }] }} />
     </TouchableOpacity>
   )
 }
 
-const MAX_SIZE = BTN_WIDTH * 1.6
-const MIN_SIZE = BTN_WIDTH * 1.2
+const MAX_SIZE = BTN_WIDTH * 1.8
+const MIN_SIZE = BTN_WIDTH * 1.3
 
 export default () => {
   const winSize = useWindowSize()
-  const maxHeight = Math.max(winSize.height * 0.11, MIN_SIZE)
+  const maxHeight = Math.max(winSize.height * 0.12, MIN_SIZE)
   const containerStyle = useMemo(() => {
     return {
       ...styles.conatiner,
@@ -82,8 +80,5 @@ const styles = createStyle({
     // backgroundColor: '#ccc',
     shadowOpacity: 1,
     textShadowRadius: 1,
-  },
-  toggleBtn: {
-    elevation: 5,
   },
 })
