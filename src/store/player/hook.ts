@@ -59,6 +59,7 @@ export const useIsPlay = () => {
 
   useEffect(() => {
     global.state_event.on('playStateChanged', update)
+    update(state.isPlay)
     return () => {
       global.state_event.off('playStateChanged', update)
     }

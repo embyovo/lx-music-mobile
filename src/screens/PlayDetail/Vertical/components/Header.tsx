@@ -40,6 +40,7 @@ export default memo(({ pageIndex, onChangePage }: { pageIndex: number, onChangeP
             <Text size={12} color={pageIndex == 1 ? '#1d2a24' : 'rgba(255,255,255,0.68)'}>歌词</Text>
           </TouchableOpacity>
         </View>
+        <View style={styles.headerSpacer} />
         <TimeoutExitBtn />
         <Btn icon="dots-vertical" color="#fff" onPress={showSetting} />
       </View>
@@ -52,12 +53,17 @@ export default memo(({ pageIndex, onChangePage }: { pageIndex: number, onChangeP
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    // justifyContent: 'center',
+    position: 'relative',
     height: '100%',
     alignItems: 'center',
   },
   segment: {
-    flex: 1,
+    position: 'absolute',
+    left: '50%',
+    marginLeft: -63,
+    top: '50%',
+    marginTop: -15,
+    width: 126,
     maxWidth: 126,
     height: 30,
     padding: 3,
@@ -65,7 +71,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.22)',
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 'auto',
+  },
+  headerSpacer: {
+    flex: 1,
   },
   segmentItem: {
     flex: 1,

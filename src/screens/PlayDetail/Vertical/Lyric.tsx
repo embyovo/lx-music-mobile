@@ -65,7 +65,6 @@ interface LineProps {
 const LrcLine = memo(({ line, lineNum, activeLine, onLayout }: LineProps) => {
   const theme = useTheme()
   const lrcFontSize = useSettingValue('playDetail.vertical.style.lrcFontSize')
-  const textAlign = useSettingValue('playDetail.style.align')
   const size = lrcFontSize / 10
   const lineHeight = setSpText(size) * 1.3
 
@@ -93,14 +92,14 @@ const LrcLine = memo(({ line, lineNum, activeLine, onLayout }: LineProps) => {
     <View style={styles.line} onLayout={handleLayout}>
       <AnimatedColorText style={{
         ...styles.lineText,
-        textAlign,
+        textAlign: 'center',
         lineHeight,
       }} textBreakStrategy="simple" color={colors[0]} opacity={colors[2]} size={size}>{line.text}</AnimatedColorText>
       {
         line.extendedLyrics.map((lrc, index) => {
           return (<AnimatedColorText style={{
             ...styles.lineTranslationText,
-            textAlign,
+            textAlign: 'center',
             lineHeight: lineHeight * 0.8,
           }} textBreakStrategy="simple" key={index} color={colors[1]} opacity={colors[2]} size={size * 0.8}>{lrc}</AnimatedColorText>)
         })
@@ -344,10 +343,13 @@ const styles = createStyle({
   line: {
     paddingTop: 10,
     paddingBottom: 10,
+    width: '100%',
+    alignItems: 'center',
     // opacity: 0,
   },
   lineText: {
     textAlign: 'center',
+    width: '100%',
     // fontSize: 16,
     // lineHeight: 20,
     // paddingTop: 5,
@@ -356,6 +358,7 @@ const styles = createStyle({
   },
   lineTranslationText: {
     textAlign: 'center',
+    width: '100%',
     // fontSize: 13,
     // lineHeight: 17,
     paddingTop: 5,

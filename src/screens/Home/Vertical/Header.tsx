@@ -107,7 +107,7 @@ const LeftHeader = () => {
       </View>
       {headerComponents[id] ?? null}
 
-      {id == 'nav_songlist' || id == 'nav_love' ? null : <TouchableOpacity style={styles.btn} onPress={openMenu}>
+      {id == 'nav_songlist' || id == 'nav_love' || id == 'nav_top' ? null : <TouchableOpacity style={styles.btn} onPress={openMenu}>
         <Icon color={theme['c-font']} name={id == 'nav_setting' ? 'dots-vertical' : 'menu'} size={19} />
       </TouchableOpacity>}
 
@@ -149,7 +149,7 @@ const RightHeader = () => {
           : <View style={styles.titleBtn}><Text style={styles.brand} size={20}>{id == 'nav_search' ? '搜索' : id == 'nav_love' ? '我的收藏' : t(id)}</Text></View>}
       </View>
       {headerComponents[id] ?? null}
-      {id == 'nav_songlist' || id == 'nav_love' ? null : <TouchableOpacity style={styles.btn} onPress={openMenu}>
+      {id == 'nav_songlist' || id == 'nav_love' || id == 'nav_top' ? null : <TouchableOpacity style={styles.btn} onPress={openMenu}>
         <Icon color={theme['c-font']} name={id == 'nav_setting' ? 'dots-vertical' : 'menu'} size={19} />
       </TouchableOpacity>}
       {/* <TouchableOpacity style={styles.btn} onPress={openSetting}>
