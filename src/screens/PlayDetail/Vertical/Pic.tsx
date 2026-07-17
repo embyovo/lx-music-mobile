@@ -69,7 +69,7 @@ const CompactLyric = ({ onPress }: { onPress: () => void }) => {
                 ? shift.interpolate({ inputRange: [0, 1], outputRange: [0.58, 1] })
                 : offset == -1 ? 0.12 : 0.30
             return (
-              <Animated.View key={displayLine + offset} style={{ ...styles.lyricRow, opacity }}>
+              <Animated.View key={`lyric_role_${offset}`} style={{ ...styles.lyricRow, opacity }}>
                 <AnimatedText size={14} color="#f1f2f1" style={styles.lyricText} numberOfLines={1}>{text ?? ''}</AnimatedText>
               </Animated.View>
             )
@@ -86,6 +86,7 @@ export default ({ componentId, onShowLyric }: { componentId: string, onShowLyric
   const { width: winWidth, height: winHeight } = useWindowSize()
   const statusBarHeight = useStatusbarHeight()
   const isShowCoverLyric = useSettingValue('playDetail.isShowCoverLyric')
+  const [visualHeight, setVisualHeight] = useState(0)
   const isPlay = useIsPlay()
   const rotateValue = useRef(new Animated.Value(0)).current
   const entrance = useRef(new Animated.Value(0)).current
@@ -146,9 +147,13 @@ export default ({ componentId, onShowLyric }: { componentId: string, onShowLyric
   // console.log('render pic')
 
   const style = useMemo(() => {
-    const imgWidth = isShowCoverLyric
-      ? Math.min(winWidth * 0.80, (winHeight - statusBarHeight - HEADER_HEIGHT) * 0.47)
-      : Math.min(winWidth * 0.84, (winHeight - statusBarHeight - HEADER_HEIGHT) * 0.51)
+    const fallbackHeight = Math.max(280, (winHeight - statusBarHeight - HEADER_HEIGHT) * 0.5)
+    const contentHeight = visualHeight || fallbackHeight
+    const lyricTop = contentHeight - 18 - 91
+    const visualRegionHeight = isShowCoverLyric ? lyricTop : contentHeight
+    const heightLimit = Math.max(120, visualRegionHeight - 20)
+    const imgWidth = Math.min(winWidth * (isShowCoverLyric ? 0.80 : 0.84), heightLimit)
+    const stageTop = Math.max(4, (visualRegionHeight - imgWidth) / 2)
     return {
       disc: {
         width: imgWidth,
@@ -170,15 +175,15 @@ export default ({ componentId, onShowLyric }: { componentId: string, onShowLyric
         height: imgWidth * ratio,
         borderRadius: imgWidth * ratio / 2,
       })),
-      stageTransform: {
-        transform: [{ translateY: isShowCoverLyric ? -44 : -22 }],
+      stagePosition: {
+        top: stageTop,
       },
     }
-  }, [isShowCoverLyric, statusBarHeight, winHeight, winWidth])
+  }, [isShowCoverLyric, statusBarHeight, visualHeight, winHeight, winWidth])
 
   return (
-    <View style={styles.container}>
-      <View style={{ ...styles.stage, ...style.disc, ...style.stageTransform }}>
+    <View style={styles.container} onLayout={({ nativeEvent }) => { setVisualHeight(nativeEvent.layout.height) }}>
+      <View style={{ ...styles.stage, ...style.disc, ...style.stagePosition }}>
         <Animated.View style={{ ...styles.content, ...style.disc, elevation: animated ? 8 : 0, opacity: entrance, transform: [{ scale: entrance.interpolate({ inputRange: [0, 1], outputRange: [0.86, 1] }) }, { rotate: rotateValue.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }}>
           <View style={{ ...styles.outerRim, ...style.disc }} />
           <View style={styles.vinylSheen} />
@@ -202,6 +207,7 @@ const styles = createStyle({
     flexShrink: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
     // backgroundColor: 'rgba(0,0,0,0.1)',
   },
   content: {
@@ -211,6 +217,7 @@ const styles = createStyle({
     overflow: 'hidden',
   },
   stage: {
+    position: 'absolute',
     justifyContent: 'center',
     alignItems: 'center',
   },
