@@ -4,6 +4,7 @@ import listState from '@/store/list/state'
 import settingState from '@/store/setting/state'
 import { fixNewMusicInfoQuality } from '@/utils'
 import { saveListPrevSelectId } from '@/utils/data'
+import { scheduleNeteaseLikes } from './neteaseLike'
 
 /**
  * 覆盖全部列表数据
@@ -48,6 +49,7 @@ export const updateUserListPosition = async(position: number, ids: string[]) => 
  */
 export const addListMusics = async(id: string, musicInfos: LX.Music.MusicInfo[], addMusicLocationType: LX.AddMusicLocationType) => {
   await global.list_event.list_music_add(id, musicInfos, addMusicLocationType)
+  scheduleNeteaseLikes(id, musicInfos)
 }
 
 /**
@@ -55,6 +57,7 @@ export const addListMusics = async(id: string, musicInfos: LX.Music.MusicInfo[],
  */
 export const moveListMusics = async(fromId: string, toId: string, musicInfos: LX.Music.MusicInfo[], addMusicLocationType: LX.AddMusicLocationType) => {
   await global.list_event.list_music_move(fromId, toId, musicInfos, addMusicLocationType)
+  if (fromId !== toId) scheduleNeteaseLikes(toId, musicInfos)
 }
 
 /**
