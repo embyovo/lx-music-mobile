@@ -1,0 +1,24 @@
+name: ExportAndroidSign
+on:
+  workflow_dispatch
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate signing files
+        run: |
+          echo "${{ secrets.KEYSTORE_JKS_B64 }}" | base64 -d > my-release-key.jks
+          cat > keystore.properties <<EOF
+storeFile=./my-release-key.jks
+storePassword=${{ secrets.STORE_PASSWORD }}
+keyAlias=${{ secrets.KEY_ALIAS }}
+keyPassword=${{ secrets.KEY_PASSWORD }}
+EOF
+      - name: Upload output
+        uses: actions/upload-artifact@v4
+        with:
+          name: android‑sign‑archive
+          path: |
+            my-release-key.jks
+            keystore.properties
