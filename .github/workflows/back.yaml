@@ -9,12 +9,8 @@ jobs:
       - name: Generate signing files
         run: |
           echo "${{ secrets.KEYSTORE_JKS_B64 }}" | base64 -d > my-release-key.jks
-          cat > keystore.properties <<EOF
-storeFile=./my-release-key.jks
-storePassword=${{ secrets.STORE_PASSWORD }}
-keyAlias=${{ secrets.KEY_ALIAS }}
-keyPassword=${{ secrets.KEY_PASSWORD }}
-EOF
+          rm -f keystore.properties
+          echo -e "storeFile=./my-release-key.jks\nstorePassword=${{ secrets.STORE_PASSWORD }}\nkeyAlias=${{ secrets.KEY_ALIAS }}\nkeyPassword=${{ secrets.KEY_PASSWORD }}" > keystore.properties
       - name: Upload output
         uses: actions/upload-artifact@v4
         with:
