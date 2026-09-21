@@ -15,7 +15,18 @@ import { useLrcPlay, useLrcSet } from '@/plugins/lyric'
 import { AnimatedText } from '@/components/common/Text'
 import { useSettingValue } from '@/store/setting/hook'
 
-const VINYL_GROOVES = [0.96, 0.88, 0.80, 0.72, 0.66]
+// 亮环模拟受光纹路，暗环模拟凹槽阴影，交替排列增强黑胶质感的立体感
+const VINYL_GROOVES = [
+  { ratio: 0.965, color: 'rgba(255,255,255,0.12)' },
+  { ratio: 0.935, color: 'rgba(0,0,0,0.34)' },
+  { ratio: 0.905, color: 'rgba(255,255,255,0.09)' },
+  { ratio: 0.875, color: 'rgba(0,0,0,0.30)' },
+  { ratio: 0.845, color: 'rgba(255,255,255,0.07)' },
+  { ratio: 0.815, color: 'rgba(0,0,0,0.26)' },
+  { ratio: 0.785, color: 'rgba(255,255,255,0.055)' },
+  { ratio: 0.74, color: 'rgba(0,0,0,0.22)' },
+  { ratio: 0.70, color: 'rgba(255,255,255,0.045)' },
+]
 const LYRIC_ROW_HEIGHT = 25
 
 const CompactLyric = ({ onPress }: { onPress: () => void }) => {
@@ -91,6 +102,9 @@ export default ({ componentId, onShowLyric }: { componentId: string, onShowLyric
   const rotateValue = useRef(new Animated.Value(0)).current
   const entrance = useRef(new Animated.Value(0)).current
   const armValue = useRef(new Animated.Value(isPlay ? 1 : 0)).current
+  // 唱臂微摆：播放中模拟针尖在唱片上轻微晃动
+  const swayValue = useRef(new Animated.Value(0.5)).current
+  const swayLoopRef = useRef<Animated.CompositeAnimation | null>(null)
   const armSyncedRef = useRef(false)
   const rotateLoopRef = useRef<ReturnType<typeof Animated.loop> | null>(null)
 
@@ -116,6 +130,7 @@ export default ({ componentId, onShowLyric }: { componentId: string, onShowLyric
   }, [entrance])
 
   useEffect(() => {
+    swayLoopRef.current?.stop()
     armValue.stopAnimation()
     if (!armSyncedRef.current) {
       armSyncedRef.current = true
@@ -123,16 +138,34 @@ export default ({ componentId, onShowLyric }: { componentId: string, onShowLyric
     } else {
       Animated.spring(armValue, {
         toValue: isPlay ? 1 : 0,
-        damping: 14,
+        // 落针时带一点回弹（低阻尼），抬臂时平顺收回（高阻尼）
+        damping: isPlay ? 11 : 16,
         stiffness: 90,
         mass: 0.8,
+        velocity: isPlay ? 0.35 : 0,
         useNativeDriver: true,
       }).start()
     }
     if (!isPlay) {
       rotateLoopRef.current?.stop()
-      return
+      // 停止后微摆缓缓归中
+      Animated.timing(swayValue, {
+        toValue: 0.5,
+        duration: 700,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }).start()
+      return () => {
+        rotateLoopRef.current?.stop()
+        swayLoopRef.current?.stop()
+      }
     }
+    // 微摆循环：以中点为中心 ±0.9° 轻晃，模拟真实唱针
+    swayLoopRef.current = Animated.loop(Animated.sequence([
+      Animated.timing(swayValue, { toValue: 1, duration: 1300, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      Animated.timing(swayValue, { toValue: 0, duration: 1300, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+    ]))
+    swayLoopRef.current.start()
     rotateLoopRef.current = Animated.loop(Animated.timing(rotateValue, {
       toValue: 1,
       duration: 18000,
@@ -142,8 +175,9 @@ export default ({ componentId, onShowLyric }: { componentId: string, onShowLyric
     rotateLoopRef.current.start()
     return () => {
       rotateLoopRef.current?.stop()
+      swayLoopRef.current?.stop()
     }
-  }, [armValue, isPlay, rotateValue])
+  }, [armValue, isPlay, rotateValue, swayValue])
   // console.log('render pic')
 
   const style = useMemo(() => {
@@ -170,11 +204,22 @@ export default ({ componentId, onShowLyric }: { componentId: string, onShowLyric
         top: imgWidth * 0.015,
         right: imgWidth * 0.035,
       },
-      grooves: VINYL_GROOVES.map(ratio => ({
+      grooves: VINYL_GROOVES.map(({ ratio, color }) => ({
         width: imgWidth * ratio,
         height: imgWidth * ratio,
         borderRadius: imgWidth * ratio / 2,
+        borderColor: color,
       })),
+      labelRing: {
+        width: imgWidth * 0.62 + 4,
+        height: imgWidth * 0.62 + 4,
+        borderRadius: imgWidth * 0.31 + 2,
+      },
+      spindle: {
+        width: imgWidth * 0.052,
+        height: imgWidth * 0.052,
+        borderRadius: imgWidth * 0.026,
+      },
       stagePosition: {
         top: stageTop,
       },
@@ -187,13 +232,19 @@ export default ({ componentId, onShowLyric }: { componentId: string, onShowLyric
         <Animated.View style={{ ...styles.content, ...style.disc, elevation: animated ? 8 : 0, opacity: entrance, transform: [{ scale: entrance.interpolate({ inputRange: [0, 1], outputRange: [0.86, 1] }) }, { rotate: rotateValue.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }}>
           <View style={{ ...styles.outerRim, ...style.disc }} />
           <View style={styles.vinylSheen} />
+          <View style={styles.vinylSheenSoft} />
           {style.grooves.map((groove, index) => <View key={index} style={{ ...styles.vinylGroove, ...groove }} />)}
           <Image url={pic} nativeID={NAV_SHEAR_NATIVE_IDS.playDetail_pic} style={style.image} />
+          <View style={{ ...styles.labelRing, ...style.labelRing }} />
+          <View style={{ ...styles.spindle, ...style.spindle }} />
         </Animated.View>
-        <Animated.View style={{ ...styles.tonearm, ...style.arm, transformOrigin: '50% 11px', transform: [{ rotate: armValue.interpolate({ inputRange: [0, 1], outputRange: ['-14deg', '10deg'] }) }] }}>
-          <View style={styles.tonearmPivot} />
-          <View style={styles.tonearmBar} />
-          <View style={styles.tonearmNeedle} />
+        {/* 原生驱动的 Animated.add 不支持带 deg 单位的字符串相加，改用嵌套视图叠加两个旋转 */}
+        <Animated.View style={{ ...styles.tonearm, ...style.arm, transformOrigin: '50% 11px', transform: [{ rotate: armValue.interpolate({ inputRange: [0, 1], outputRange: ['-14deg', '10deg'] }) }], opacity: entrance }}>
+          <Animated.View style={{ ...styles.tonearmSway, transform: [{ rotate: swayValue.interpolate({ inputRange: [0, 1], outputRange: ['0.9deg', '-0.9deg'] }) }] }}>
+            <View style={styles.tonearmPivot} />
+            <View style={styles.tonearmBar} />
+            <View style={styles.tonearmNeedle} />
+          </Animated.View>
         </Animated.View>
       </View>
       {isShowCoverLyric ? <CompactLyric onPress={onShowLyric} /> : null}
@@ -211,7 +262,7 @@ const styles = createStyle({
     // backgroundColor: 'rgba(0,0,0,0.1)',
   },
   content: {
-    backgroundColor: '#151515',
+    backgroundColor: '#121212',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -224,19 +275,36 @@ const styles = createStyle({
   outerRim: {
     position: 'absolute',
     borderWidth: 3,
-    borderColor: '#343434',
+    borderColor: '#3d3d3d',
   },
   vinylGroove: {
     position: 'absolute',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.10)',
   },
   vinylSheen: {
     position: 'absolute',
-    width: '24%',
-    height: '125%',
-    backgroundColor: 'rgba(255,255,255,0.035)',
+    width: '26%',
+    height: '130%',
+    backgroundColor: 'rgba(255,255,255,0.05)',
     transform: [{ rotate: '24deg' }],
+  },
+  vinylSheenSoft: {
+    position: 'absolute',
+    width: '12%',
+    height: '130%',
+    backgroundColor: 'rgba(255,255,255,0.028)',
+    transform: [{ rotate: '-18deg' }],
+  },
+  labelRing: {
+    position: 'absolute',
+    borderWidth: 2,
+    borderColor: 'rgba(0,0,0,0.50)',
+  },
+  spindle: {
+    position: 'absolute',
+    backgroundColor: '#0b0b0b',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.22)',
   },
   tonearm: {
     position: 'absolute',
@@ -244,6 +312,15 @@ const styles = createStyle({
     alignItems: 'center',
     zIndex: 20,
     elevation: 14,
+  },
+  tonearmSway: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    transformOrigin: '50% 11px',
   },
   tonearmPivot: {
     width: 22,

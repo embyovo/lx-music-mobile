@@ -38,7 +38,10 @@ export default memo(({ componentId }: { componentId: string }) => {
 
   const backgroundSource = useMemo(() => {
     if (typeof musicInfo.pic == 'number') return musicInfo.pic
-    return musicInfo.pic ? { uri: musicInfo.pic, headers: defaultHeaders } : undefined
+    if (!musicInfo.pic) return undefined
+    // 本地文件路径需要 file:// 前缀，否则背景图加载失败会显示灰色底色
+    const uri = musicInfo.pic.startsWith('/') ? 'file://' + musicInfo.pic : musicInfo.pic
+    return { uri, headers: defaultHeaders }
   }, [musicInfo.pic])
 
   const changePage = (index: number) => {
@@ -83,7 +86,7 @@ export default memo(({ componentId }: { componentId: string }) => {
   }, [])
 
   return (
-    <ImageBackground source={backgroundSource} blurRadius={34} style={styles.background}>
+    <ImageBackground source={backgroundSource} blurRadius={18} style={styles.background}>
       <View style={styles.backdrop}>
       <Header pageIndex={pageIndex} onChangePage={changePage} />
       <View style={styles.container}>
@@ -118,7 +121,7 @@ const styles = createStyle({
   },
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(14, 24, 17, 0.62)',
+    backgroundColor: 'rgba(0, 0, 0, 0.40)',
   },
   container: {
     flex: 1,

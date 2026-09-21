@@ -11,6 +11,8 @@ import { setActiveList } from '@/core/list'
 import Text from '@/components/common/Text'
 import Loading from '@/components/common/Loading'
 import { playList } from '@/core/player/player'
+import { updateSetting } from '@/core/common'
+import { useSettingValue } from '@/store/setting/hook'
 
 export interface ActiveListProps {
   onShowSearchBar: () => void
@@ -22,6 +24,10 @@ export interface ActiveListType {
 
 export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, onScrollToTop }, ref) => {
   const theme = useTheme()
+  const isShowCover = useSettingValue('list.isShowCover')
+  const toggleShowCover = () => {
+    updateSetting({ 'list.isShowCover': !isShowCover })
+  }
   const currentListId = useActiveListId()
   const fetching = useListFetching(currentListId)
   const musicList = useMusicList()
@@ -34,9 +40,6 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
     },
   }))
 
-  const showList = () => {
-    global.app_event.changeLoveListVisible(true)
-  }
   const playAll = () => {
     if (!musicList.length) return
     void playList(currentListId, 0)
@@ -67,11 +70,13 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
       </TouchableOpacity>
       <View style={styles.toolbar}>
         <TouchableOpacity style={styles.playAll} onPress={playAll} onLongPress={onScrollToTop}>
-          <View style={{ ...styles.playCircle, backgroundColor: theme['c-content-background'] }}><Icon name="play" size={16} color={theme['c-600']} /></View>
+          <View style={{ ...styles.playCircle, backgroundColor: theme['c-button-background'] }}><Icon name="play" size={16} color={theme['c-button-font']} /></View>
           <Text size={16} style={styles.playText}>全部播放 ({musicList.length})</Text>
         </TouchableOpacity>
         {fetching ? <Loading color={theme['c-primary']} style={styles.loading} /> : null}
-        <TouchableOpacity style={styles.toolBtn} onPress={showList}><Icon name="album" size={19} color={theme['c-600']} /></TouchableOpacity>
+        <TouchableOpacity style={styles.toolBtn} onPress={toggleShowCover} accessibilityLabel="显示歌曲封面">
+          <Icon name="album" size={19} color={isShowCover ? theme['c-button-font'] : theme['c-350']} />
+        </TouchableOpacity>
         <TouchableOpacity style={styles.toolBtn} onPress={onShowSearchBar}><Icon name="search-2" size={19} color={theme['c-600']} /></TouchableOpacity>
       </View>
     </View>
@@ -110,10 +115,10 @@ const styles = createStyle({
     fontWeight: '700',
   },
   search: {
-    height: 38,
-    borderRadius: 20,
+    height: 46,
+    borderRadius: 24,
     paddingHorizontal: 16,
-    marginVertical: 8,
+    marginVertical: 9,
     flexDirection: 'row',
     alignItems: 'center',
   },

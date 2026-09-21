@@ -158,12 +158,12 @@ const styles = createStyle({
   content: {
     flexDirection: 'row',
     flex: 1,
-    height: 42,
+    height: 48,
   },
   searchField: {
     flex: 1,
-    height: 42,
-    borderRadius: 22,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 0.5,
     paddingLeft: 14,
     paddingRight: 4,
@@ -171,11 +171,11 @@ const styles = createStyle({
     alignItems: 'center',
   },
   input: {
-    height: 42,
+    height: 48,
     paddingLeft: 9,
   },
   btn: {
-    height: 42,
+    height: 48,
     paddingLeft: 14,
     paddingRight: 2,
     alignItems: 'center',

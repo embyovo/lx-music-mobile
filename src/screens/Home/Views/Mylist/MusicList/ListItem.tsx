@@ -5,13 +5,14 @@ import { LIST_ITEM_HEIGHT } from '@/config/constant'
 import { Icon } from '@/components/common/Icon'
 import { createStyle, type RowInfo } from '@/utils/tools'
 import { useTheme } from '@/store/theme/hook'
+import { useSettingValue } from '@/store/setting/hook'
 import { useAssertApiSupport } from '@/store/common/hook'
 import { scaleSizeH } from '@/utils/pixelRatio'
 import Text from '@/components/common/Text'
 import Badge from '@/components/common/Badge'
-import SongDivider from '@/components/common/SongDivider'
+import Image from '@/components/common/Image'
 
-export const ITEM_HEIGHT = scaleSizeH(LIST_ITEM_HEIGHT + 34)
+export const ITEM_HEIGHT = scaleSizeH(LIST_ITEM_HEIGHT + 40)
 
 
 export default memo(({ item, index, activeIndex, onPress, onShowMenu, onLongPress, selectedList, rowInfo, isShowAlbumName, isShowInterval, showDailyDate }: {
@@ -28,6 +29,7 @@ export default memo(({ item, index, activeIndex, onPress, onShowMenu, onLongPres
   showDailyDate?: boolean
 }) => {
   const theme = useTheme()
+  const isShowCover = useSettingValue('list.isShowCover')
 
   const isSelected = selectedList.includes(item)
   // console.log(item.name, selectedList, selectedList.includes(item))
@@ -53,13 +55,14 @@ export default memo(({ item, index, activeIndex, onPress, onShowMenu, onLongPres
             ? <Icon style={styles.sn} name="play-outline" size={13} color={theme['c-primary-font']} />
             : <Text style={styles.sn} size={13} color={theme['c-300']}>{index + 1}</Text>
         }
+        {isShowCover ? <Image url={item.meta.picUrl} style={styles.cover} /> : null}
         <View style={styles.itemInfo}>
           {/* <View style={styles.listItemTitle}> */}
-          <Text size={17} style={{ fontWeight: '600' }} color={active ? theme['c-primary-font'] : theme['c-font']} numberOfLines={1}>{item.name}</Text>
+          <Text size={16} style={{ fontWeight: '600' }} color={active ? theme['c-primary-font'] : theme['c-font']} numberOfLines={1}>{item.name}</Text>
           {/* </View> */}
           <View style={styles.listItemSingle}>
             <Badge>{item.source.toUpperCase()}</Badge>
-            <Text style={styles.listItemSingleText} size={13} color={active ? theme['c-primary-alpha-200'] : theme['c-500']} numberOfLines={1}>
+            <Text style={styles.listItemSingleText} size={12} color={active ? theme['c-primary-alpha-200'] : theme['c-500']} numberOfLines={1}>
               {singer}
             </Text>
           </View>
@@ -75,7 +78,6 @@ export default memo(({ item, index, activeIndex, onPress, onShowMenu, onLongPres
         <Icon name="dots-vertical" style={{ color: theme['c-350'] }} size={12} />
       </TouchableOpacity>
       {/* </View> */}
-      <SongDivider inset={50} />
       {showDailyDate && item.meta.dailyRecommendationDate ? <View pointerEvents="none" style={styles.dateFooter}><Text size={10} color={theme['c-400']} numberOfLines={1}>每日推荐 · {item.meta.dailyRecommendationDate}</Text></View> : null}
     </View>
   )
@@ -117,6 +119,14 @@ const styles = createStyle({
     // backgroundColor: 'rgba(0,0,0,0.2)',
     paddingLeft: 3,
     paddingRight: 3,
+  },
+  cover: {
+    width: 72,
+    height: 72,
+    borderRadius: 10,
+    marginRight: 10,
+    flexGrow: 0,
+    flexShrink: 0,
   },
   itemInfo: {
     flexGrow: 1,

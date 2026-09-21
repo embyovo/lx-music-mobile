@@ -342,6 +342,11 @@ declare global {
       'list.isShowInterval': boolean
 
       /**
+       * 是否在歌单页面显示歌曲封面
+       */
+      'list.isShowCover': boolean
+
+      /**
        * 是否自动恢复列表滚动位置（仅对我的列表有效）
        */
       'list.isSaveScrollLocation': boolean

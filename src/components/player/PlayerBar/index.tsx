@@ -1,22 +1,17 @@
 import { memo, useEffect, useMemo, useRef } from 'react'
 import { Animated, View } from 'react-native'
-import { useKeyboard } from '@/utils/hooks'
 
 import Pic from './components/Pic'
 import Title from './components/Title'
 import PlayInfo from './components/PlayInfo'
 import ControlBtn from './components/ControlBtn'
 import { createStyle } from '@/utils/tools'
-// import { useSettingValue } from '@/store/setting/hook'
 import { useTheme } from '@/store/theme/hook'
-import { useSettingValue } from '@/store/setting/hook'
 
 
 export default memo(({ isHome = false }: { isHome?: boolean }) => {
   // const { onLayout, ...layout } = useLayout()
-  const { keyboardShown } = useKeyboard()
   const theme = useTheme()
-  const autoHidePlayBar = useSettingValue('common.autoHidePlayBar')
   const entrance = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
@@ -47,7 +42,7 @@ export default memo(({ isHome = false }: { isHome?: boolean }) => {
 
   // console.log('render pb')
 
-  return autoHidePlayBar && keyboardShown ? null : playerComponent
+  return playerComponent
 })
 
 
@@ -59,9 +54,9 @@ const styles = createStyle({
     // marginTop: -progressContentPadding,
     // backgroundColor: 'rgba(0, 0, 0, .1)',
     // borderTopWidth: BorderWidths.normal2,
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingLeft: 10,
-    minHeight: 72,
+    minHeight: 86,
     marginHorizontal: 12,
     marginTop: 22,
     marginBottom: 4,

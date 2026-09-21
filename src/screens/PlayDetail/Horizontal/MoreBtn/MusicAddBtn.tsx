@@ -1,26 +1,17 @@
-import { useRef } from 'react'
-import MusicAddModal, { type MusicAddModalType } from '@/components/MusicAddModal'
-import playerState from '@/store/player/state'
-import Btn from './Btn'
+import { useLoveStatus, LIKE_COLOR } from '@/utils/loveStatus'
+import HeartIcon from '@/components/common/HeartIcon'
+import Btn, { BTN_ICON_SIZE } from './Btn'
 
 
 export default () => {
-  const musicAddModalRef = useRef<MusicAddModalType>(null)
-
-  const handleShowMusicAddModal = () => {
-    const musicInfo = playerState.playMusicInfo.musicInfo
-    if (!musicInfo) return
-    musicAddModalRef.current?.show({
-      musicInfo: 'progress' in musicInfo ? musicInfo.metadata.musicInfo : musicInfo,
-      isMove: false,
-      listId: playerState.playMusicInfo.listId!,
-    })
-  }
+  const { liked, toggle } = useLoveStatus()
 
   return (
-    <>
-      <Btn icon="add-music" onPress={handleShowMusicAddModal} />
-      <MusicAddModal ref={musicAddModalRef} />
-    </>
+    // 与播放栏心形一致：点击直接收藏/取消收藏，已喜欢时红色填满心形
+    <Btn icon="add-music" onPress={() => { void toggle() }}>
+      {liked
+        ? <HeartIcon filled size={BTN_ICON_SIZE} color={LIKE_COLOR} />
+        : undefined}
+    </Btn>
   )
 }

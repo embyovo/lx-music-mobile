@@ -4,14 +4,18 @@ import { View, TouchableOpacity } from 'react-native'
 import Text from '@/components/common/Text'
 import SongDivider from '@/components/common/SongDivider'
 import Badge, { type BadgeType } from '@/components/common/Badge'
+import Image from '@/components/common/Image'
 import { Icon } from '@/components/common/Icon'
 import { useI18n } from '@/lang'
 import { useTheme } from '@/store/theme/hook'
+import { useSettingValue } from '@/store/setting/hook'
 import { scaleSizeH } from '@/utils/pixelRatio'
 import { LIST_ITEM_HEIGHT } from '@/config/constant'
 import { createStyle, type RowInfo } from '@/utils/tools'
 
-export const ITEM_HEIGHT = scaleSizeH(LIST_ITEM_HEIGHT + 12)
+export const ITEM_HEIGHT = scaleSizeH(LIST_ITEM_HEIGHT + 40)
+// 关闭封面时的紧凑行高
+export const ITEM_HEIGHT_COMPACT = scaleSizeH(LIST_ITEM_HEIGHT + 26)
 
 const useQualityTag = (musicInfo: LX.Music.MusicInfoOnline) => {
   const t = useI18n()
@@ -43,6 +47,7 @@ export default memo(({ item, index, showSource, onPress, onLongPress, onShowMenu
   isShowInterval: boolean
 }) => {
   const theme = useTheme()
+  const isShowCover = useSettingValue('list.isShowCover')
 
   const isSelected = selectedList.includes(item)
 
@@ -60,9 +65,10 @@ export default memo(({ item, index, showSource, onPress, onLongPress, onShowMenu
   const singer = `${item.singer}${isShowAlbumName && item.meta.albumName ? ` · ${item.meta.albumName}` : ''}`
 
   return (
-    <View style={{ ...styles.listItem, width: rowInfo.rowWidth, height: ITEM_HEIGHT, backgroundColor: isSelected ? theme['c-primary-background-hover'] : 'rgba(0,0,0,0)' }}>
+    <View style={{ ...styles.listItem, width: rowInfo.rowWidth, height: isShowCover ? ITEM_HEIGHT : ITEM_HEIGHT_COMPACT, backgroundColor: isSelected ? theme['c-primary-background-hover'] : 'rgba(0,0,0,0)' }}>
       <TouchableOpacity style={styles.listItemLeft} onPress={() => { onPress(item, index) }} onLongPress={() => { onLongPress(item, index) }}>
         <Text style={styles.sn} size={13} color={theme['c-300']}>{index + 1}</Text>
+        {isShowCover ? <Image url={item.meta.picUrl} style={styles.cover} /> : null}
         <View style={styles.itemInfo}>
           <Text size={16} style={styles.title} numberOfLines={1}>{item.name}</Text>
           <View style={styles.listItemSingle}>
@@ -80,7 +86,7 @@ export default memo(({ item, index, showSource, onPress, onLongPress, onShowMenu
      <TouchableOpacity onPress={handleShowMenu} ref={moreButtonRef} style={styles.moreButton}>
         <Icon name="dots-vertical" style={{ color: theme['c-350'] }} size={12} />
       </TouchableOpacity>
-      <SongDivider inset={50} />
+      <SongDivider inset={isShowCover ? 108 : 50} />
     </View>
   )
 }, (prevProps, nextProps) => {
@@ -117,6 +123,14 @@ const styles = createStyle({
     // backgroundColor: 'rgba(0,0,0,0.2)',
     paddingLeft: 3,
     paddingRight: 3,
+  },
+  cover: {
+    width: 72,
+    height: 72,
+    borderRadius: 10,
+    flexGrow: 0,
+    flexShrink: 0,
+    marginRight: 10,
   },
   itemInfo: {
     flexGrow: 1,

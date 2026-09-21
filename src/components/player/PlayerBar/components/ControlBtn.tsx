@@ -41,7 +41,7 @@ const TogglePlayBtn = () => {
 
   return (
     <TouchableOpacity style={styles.cotrolBtn} activeOpacity={0.5} onPress={togglePlay}>
-      <Icon name={isPlay ? 'pause' : 'play'} color={theme['c-600']} size={BTN_SIZE} />
+      <Icon name={isPlay ? 'pause' : 'play'} color={theme['c-button-font']} size={BTN_SIZE} />
     </TouchableOpacity>
   )
 }

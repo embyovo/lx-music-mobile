@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState, forwardRef, useImperativeHandle } from 'react'
 import {Button, DeviceEventEmitter, FlatList, type FlatListProps, Image, RefreshControl, View} from 'react-native'
-import ListItem, { ITEM_HEIGHT } from './ListItem'
+import ListItem, { ITEM_HEIGHT, ITEM_HEIGHT_COMPACT } from './ListItem'
 import { createStyle, getRowInfo, type RowInfoType } from '@/utils/tools'
 import type { Position } from './ListMenu'
 import type { SelectMode } from './MultipleModeBar'
@@ -69,6 +69,8 @@ const List = forwardRef<ListType, ListProps>(({
   const rowInfo = useRef(getRowInfo(rowType))
   const isShowAlbumName = useSettingValue('list.isShowAlbumName')
   const isShowInterval = useSettingValue('list.isShowInterval')
+  const isShowCover = useSettingValue('list.isShowCover')
+  const itemHeight = isShowCover ? ITEM_HEIGHT : ITEM_HEIGHT_COMPACT
   // const currentListIdRef = useRef('')
   // console.log('render music list')
 
@@ -224,7 +226,7 @@ const List = forwardRef<ListType, ListProps>(({
 
   const getkey: FlatListType['keyExtractor'] = item => item.id
   const getItemLayout: FlatListType['getItemLayout'] = (data, index) => {
-    return { length: ITEM_HEIGHT, offset: ITEM_HEIGHT * index, index }
+    return { length: itemHeight, offset: itemHeight * index, index }
   }
   const refreshControl = useMemo(() => (
     <RefreshControl

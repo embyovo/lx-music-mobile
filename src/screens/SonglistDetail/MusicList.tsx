@@ -4,11 +4,12 @@ import {clearListDetail, getListDetail, setDailyListDetail, setListDetail, setLi
 import songlistState from '@/store/songlist/state'
 import {handlePlay} from './listAction'
 import Header, {type HeaderType} from './Header'
-import {useListInfo} from './state'
+import {useListInfo, AccentContext, DAILY_LIST_ID, DAILY_ACCENT} from './state'
 import MyContext from "@/store/TopContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {getSyncHost} from "@/utils/data.ts";
 import { markDailyRecommendations } from '@/utils/dailyRecommendation'
+import { getDominantColor } from '@/utils/colorExtractor'
 
 export interface MusicListProps {
   componentId: string
@@ -37,6 +38,23 @@ export default forwardRef<MusicListType, MusicListProps>(({ componentId }, ref) 
     isMe:false,
     showQR:false
   })
+  // 歌单主题色：每日推荐固定活力橙，其他歌单从封面提取主色（提取失败回退 null → 使用全局主题色）
+  const [accent, setAccent] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (info.id == DAILY_LIST_ID) {
+      setAccent(DAILY_ACCENT)
+      return
+    }
+    let stale = false
+    setAccent(null)
+    void getDominantColor(info.img).then((color) => {
+      if (!stale) setAccent(color)
+    })
+    return () => {
+      stale = true
+    }
+  }, [info.id, info.img])
 
 
   /**
@@ -309,6 +327,7 @@ export default forwardRef<MusicListType, MusicListProps>(({ componentId }, ref) 
 
 
   return <MyContext.Provider value={store}>
+    <AccentContext.Provider value={accent}>
     <OnlineList
       ref={listRef}
       onPlayList={handlePlayList}
@@ -317,6 +336,7 @@ export default forwardRef<MusicListType, MusicListProps>(({ componentId }, ref) 
       ListHeaderComponent={header}
       // progressViewOffset={}
     />
+    </AccentContext.Provider>
   </MyContext.Provider>
 
 })
