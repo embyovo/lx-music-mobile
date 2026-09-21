@@ -5,8 +5,9 @@ import { useTheme } from '@/store/theme/hook'
 import { playNext, playPrev, togglePlay } from '@/core/player/player'
 import { createStyle } from '@/utils/tools'
 import { useHorizontalMode } from '@/utils/hooks'
+import QuickLike from './QuickLike'
 
-const BTN_SIZE = 24
+const BTN_SIZE = 28
 const handlePlayPrev = () => {
   void playPrev()
 }
@@ -40,7 +41,7 @@ const TogglePlayBtn = () => {
 
   return (
     <TouchableOpacity style={styles.cotrolBtn} activeOpacity={0.5} onPress={togglePlay}>
-      <Icon name={isPlay ? 'pause' : 'play'} color={theme['c-button-font']} size={BTN_SIZE} />
+      <Icon name={isPlay ? 'pause' : 'play'} color={theme['c-600']} size={BTN_SIZE} />
     </TouchableOpacity>
   )
 }
@@ -57,6 +58,7 @@ export default () => {
     */}
       {/* {btnPrev} */}
       { isHorizontalMode ? <PlayPrevBtn /> : null }
+      <QuickLike />
       <TogglePlayBtn />
       <PlayNextBtn />
     </>
@@ -66,8 +68,8 @@ export default () => {
 
 const styles = createStyle({
   cotrolBtn: {
-    width: 46,
-    height: 46,
+    width: 40,
+    height: 48,
     justifyContent: 'center',
     alignItems: 'center',
 

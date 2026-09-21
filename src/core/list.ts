@@ -5,6 +5,7 @@ import settingState from '@/store/setting/state'
 import { fixNewMusicInfoQuality } from '@/utils'
 import { saveListPrevSelectId } from '@/utils/data'
 import { scheduleNeteaseLikes } from './neteaseLike'
+import { getListMusics } from '@/utils/listManage'
 
 /**
  * 覆盖全部列表数据
@@ -48,7 +49,20 @@ export const updateUserListPosition = async(position: number, ids: string[]) => 
  * 批量添加歌曲到列表
  */
 export const addListMusics = async(id: string, musicInfos: LX.Music.MusicInfo[], addMusicLocationType: LX.AddMusicLocationType) => {
+  const dateUpdates: LX.List.ListActionMusicUpdate = []
+  if (id === LIST_IDS.DEFAULT && musicInfos.some(item => item.meta.dailyRecommendationDate)) {
+    const existing = new Map((await getListMusics(id)).map(item => [item.id, item]))
+    for (const incoming of musicInfos) {
+      const current = existing.get(incoming.id)
+      const date = incoming.meta.dailyRecommendationDate
+      if (current?.source === 'wy' && incoming.source === 'wy' && date && date > (current.meta.dailyRecommendationDate ?? '')) {
+        dateUpdates.push({ id, musicInfo: { ...current, meta: { ...current.meta, dailyRecommendationDate: date } } })
+      }
+    }
+  }
   await global.list_event.list_music_add(id, musicInfos, addMusicLocationType)
+  // Older sync servers ignore duplicates in add events; send metadata changes explicitly.
+  if (dateUpdates.length) await global.list_event.list_music_update(dateUpdates)
   scheduleNeteaseLikes(id, musicInfos)
 }
 

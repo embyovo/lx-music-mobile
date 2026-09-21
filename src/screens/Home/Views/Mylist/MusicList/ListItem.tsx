@@ -9,11 +9,12 @@ import { useAssertApiSupport } from '@/store/common/hook'
 import { scaleSizeH } from '@/utils/pixelRatio'
 import Text from '@/components/common/Text'
 import Badge from '@/components/common/Badge'
+import SongDivider from '@/components/common/SongDivider'
 
-export const ITEM_HEIGHT = scaleSizeH(LIST_ITEM_HEIGHT + 10)
+export const ITEM_HEIGHT = scaleSizeH(LIST_ITEM_HEIGHT + 34)
 
 
-export default memo(({ item, index, activeIndex, onPress, onShowMenu, onLongPress, selectedList, rowInfo, isShowAlbumName, isShowInterval }: {
+export default memo(({ item, index, activeIndex, onPress, onShowMenu, onLongPress, selectedList, rowInfo, isShowAlbumName, isShowInterval, showDailyDate }: {
   item: LX.Music.MusicInfo
   index: number
   activeIndex: number
@@ -24,6 +25,7 @@ export default memo(({ item, index, activeIndex, onPress, onShowMenu, onLongPres
   rowInfo: RowInfo
   isShowAlbumName: boolean
   isShowInterval: boolean
+  showDailyDate?: boolean
 }) => {
   const theme = useTheme()
 
@@ -44,7 +46,7 @@ export default memo(({ item, index, activeIndex, onPress, onShowMenu, onLongPres
   const singer = `${item.singer}${isShowAlbumName && item.meta.albumName ? ` · ${item.meta.albumName}` : ''}`
 
   return (
-    <View style={{ ...styles.listItem, width: rowInfo.rowWidth, height: ITEM_HEIGHT, backgroundColor: isSelected ? theme['c-primary-background-hover'] : 'rgba(0,0,0,0)', opacity: isSupported ? 1 : 0.5 }}>
+    <View style={{ ...styles.listItem, width: rowInfo.rowWidth, height: ITEM_HEIGHT, paddingBottom: showDailyDate ? scaleSizeH(18) : 0, backgroundColor: isSelected ? theme['c-primary-background-hover'] : 'rgba(0,0,0,0)', opacity: isSupported ? 1 : 0.5 }}>
       <TouchableOpacity style={styles.listItemLeft} onPress={() => { onPress(item, index) }} onLongPress={() => { onLongPress(item, index) }}>
         {
           active
@@ -53,11 +55,11 @@ export default memo(({ item, index, activeIndex, onPress, onShowMenu, onLongPres
         }
         <View style={styles.itemInfo}>
           {/* <View style={styles.listItemTitle}> */}
-          <Text color={active ? theme['c-primary-font'] : theme['c-font']} numberOfLines={1}>{item.name}</Text>
+          <Text size={17} style={{ fontWeight: '600' }} color={active ? theme['c-primary-font'] : theme['c-font']} numberOfLines={1}>{item.name}</Text>
           {/* </View> */}
           <View style={styles.listItemSingle}>
             <Badge>{item.source.toUpperCase()}</Badge>
-            <Text style={styles.listItemSingleText} size={11} color={active ? theme['c-primary-alpha-200'] : theme['c-500']} numberOfLines={1}>
+            <Text style={styles.listItemSingleText} size={13} color={active ? theme['c-primary-alpha-200'] : theme['c-500']} numberOfLines={1}>
               {singer}
             </Text>
           </View>
@@ -73,6 +75,8 @@ export default memo(({ item, index, activeIndex, onPress, onShowMenu, onLongPres
         <Icon name="dots-vertical" style={{ color: theme['c-350'] }} size={12} />
       </TouchableOpacity>
       {/* </View> */}
+      <SongDivider inset={50} />
+      {showDailyDate && item.meta.dailyRecommendationDate ? <View pointerEvents="none" style={styles.dateFooter}><Text size={10} color={theme['c-400']} numberOfLines={1}>每日推荐 · {item.meta.dailyRecommendationDate}</Text></View> : null}
     </View>
   )
 }, (prevProps, nextProps) => {
@@ -80,6 +84,7 @@ export default memo(({ item, index, activeIndex, onPress, onShowMenu, onLongPres
     prevProps.index === nextProps.index &&
     prevProps.isShowAlbumName === nextProps.isShowAlbumName &&
     prevProps.isShowInterval === nextProps.isShowInterval &&
+    prevProps.showDailyDate === nextProps.showDailyDate &&
     prevProps.activeIndex != nextProps.index &&
     nextProps.activeIndex != nextProps.index &&
     nextProps.selectedList.includes(nextProps.item) == prevProps.selectedList.includes(nextProps.item)
@@ -125,9 +130,10 @@ const styles = createStyle({
   //   flexShrink: 1,
   // },
   listItemSingle: {
-    paddingTop: 3,
+    paddingTop: 6,
     flexDirection: 'row',
     // alignItems: 'flex-end',
+    alignItems: 'center',
   },
   listItemSingleText: {
     // backgroundColor: 'rgba(0,0,0,0.2)',
@@ -157,5 +163,12 @@ const styles = createStyle({
     // paddingBottom: 10,
     // backgroundColor: 'rgba(0,0,0,0.2)',
     justifyContent: 'center',
+  },
+  dateFooter: {
+    position: 'absolute',
+    left: 50,
+    right: 20,
+    bottom: 5,
+    alignItems: 'flex-end',
   },
 })

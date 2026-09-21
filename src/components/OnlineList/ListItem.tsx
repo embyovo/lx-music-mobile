@@ -2,6 +2,7 @@ import { memo, useRef } from 'react'
 import { View, TouchableOpacity } from 'react-native'
 // import Button from '@/components/common/Button'
 import Text from '@/components/common/Text'
+import SongDivider from '@/components/common/SongDivider'
 import Badge, { type BadgeType } from '@/components/common/Badge'
 import { Icon } from '@/components/common/Icon'
 import { useI18n } from '@/lang'
@@ -79,6 +80,7 @@ export default memo(({ item, index, showSource, onPress, onLongPress, onShowMenu
      <TouchableOpacity onPress={handleShowMenu} ref={moreButtonRef} style={styles.moreButton}>
         <Icon name="dots-vertical" style={{ color: theme['c-350'] }} size={12} />
       </TouchableOpacity>
+      <SongDivider inset={50} />
     </View>
   )
 }, (prevProps, nextProps) => {

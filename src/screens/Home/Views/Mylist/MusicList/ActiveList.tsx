@@ -67,7 +67,7 @@ export default forwardRef<ActiveListType, ActiveListProps>(({ onShowSearchBar, o
       </TouchableOpacity>
       <View style={styles.toolbar}>
         <TouchableOpacity style={styles.playAll} onPress={playAll} onLongPress={onScrollToTop}>
-          <View style={{ ...styles.playCircle, backgroundColor: theme['c-primary'] }}><Icon name="play" size={17} color="#10271e" /></View>
+          <View style={{ ...styles.playCircle, backgroundColor: theme['c-content-background'] }}><Icon name="play" size={16} color={theme['c-600']} /></View>
           <Text size={16} style={styles.playText}>全部播放 ({musicList.length})</Text>
         </TouchableOpacity>
         {fetching ? <Loading color={theme['c-primary']} style={styles.loading} /> : null}
@@ -85,7 +85,7 @@ const styles = createStyle({
     paddingBottom: 4,
   },
   tabs: {
-    height: 52,
+    height: 58,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -121,7 +121,7 @@ const styles = createStyle({
     marginLeft: 9,
   },
   toolbar: {
-    height: 52,
+    height: 60,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -131,9 +131,10 @@ const styles = createStyle({
     alignItems: 'center',
   },
   playCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    paddingLeft: 2,
     justifyContent: 'center',
     alignItems: 'center',
   },

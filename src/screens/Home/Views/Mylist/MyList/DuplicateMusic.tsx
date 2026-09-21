@@ -13,6 +13,7 @@ import { playList } from '@/core/player/player'
 import { useI18n } from '@/lang'
 import { handleRemove } from '../MusicList/listAction'
 import Button from '@/components/common/Button'
+import SongDivider from '@/components/common/SongDivider'
 
 type FlatListProps = _FlatListProps<DuplicateMusicItem>
 const ITEM_HEIGHT = scaleSizeH(56)
@@ -79,6 +80,7 @@ const ListItem = memo(({ info, index, onRemove, onPlay, selectedList, onPress }:
           <Icon name="remove" style={{ color: theme['c-button-font'] }} size={18} />
         </Button>
       </View>
+      <SongDivider />
     </View>
   )
 }, (prevProps, nextProps) => {

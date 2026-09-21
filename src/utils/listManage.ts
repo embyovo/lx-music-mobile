@@ -220,6 +220,17 @@ export const listMusicOverwrite = async(listId: string, musicInfos: LX.Music.Mus
 export const listMusicAdd = async(id: string, musicInfos: LX.Music.MusicInfo[], addMusicLocationType: LX.AddMusicLocationType): Promise<string[]> => {
   const targetList = await getListMusics(id)
 
+  // Refresh the latest recommendation date without duplicating songs or replacing other metadata.
+  if (id === LIST_IDS.DEFAULT) {
+    const dates = new Map(musicInfos.filter(item => item.source === 'wy' && item.meta.dailyRecommendationDate).map(item => [item.id, item.meta.dailyRecommendationDate!]))
+    targetList.forEach((item, index) => {
+      const date = dates.get(item.id)
+      if (item.source === 'wy' && date && date > (item.meta.dailyRecommendationDate ?? '')) {
+        targetList[index] = { ...item, meta: { ...item.meta, dailyRecommendationDate: date } }
+      }
+    })
+  }
+
   const listSet = new Set<string>()
   for (const item of targetList) listSet.add(item.id)
   musicInfos = musicInfos.filter(item => {

@@ -3,6 +3,7 @@ import SearchTipList, { type SearchTipListProps as _SearchTipListProps, type Sea
 import { debounce } from '@/utils'
 import { searchListMusic } from './listAction'
 import Button from '@/components/common/Button'
+import SongDivider from '@/components/common/SongDivider'
 import { createStyle } from '@/utils/tools'
 import Text from '@/components/common/Text'
 import { useTheme } from '@/store/theme/hook'
@@ -101,6 +102,7 @@ export default forwardRef<ListMusicSearchType, ListMusicSearchProps>(({ onScroll
           <Text style={styles.subName} numberOfLines={1} size={12} color={theme['c-font-label']}>{item.singer} ({item.meta.albumName})</Text>
         </View>
         <Text style={styles.itemSource} size={12} color={theme['c-font-label']}>{item.source}</Text>
+        <SongDivider />
       </Button>
     )
   }

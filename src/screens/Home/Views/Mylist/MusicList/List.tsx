@@ -14,6 +14,8 @@ import type { Position } from './ListMenu'
 import type { SelectMode } from './MultipleModeBar'
 import { useActiveListId } from '@/store/list/hook'
 import { useSettingValue } from '@/store/setting/hook'
+import { LIST_IDS } from '@/config/constant'
+import { getDailyRecommendationEndIndexes } from '@/utils/dailyRecommendation'
 
 type FlatListType = FlatListProps<LX.Music.MusicInfo>
 
@@ -48,6 +50,7 @@ const List = forwardRef<ListType, ListProps>(({ onShowMenu, onMuiltSelectMode, o
   // const t = useI18n()
   const flatListRef = useRef<FlatList>(null)
   const [currentList, setList] = useState<LX.List.ListMusics>([])
+  const recommendationEnds = useMemo(() => getDailyRecommendationEndIndexes(currentList), [currentList])
   const listFirstScrollRef = useRef(false)
   const isMultiSelectModeRef = useRef(false)
   const selectModeRef = useRef<SelectMode>('single')
@@ -261,6 +264,7 @@ const List = forwardRef<ListType, ListProps>(({ onShowMenu, onMuiltSelectMode, o
       rowInfo={rowInfo.current}
       isShowAlbumName={isShowAlbumName}
       isShowInterval={isShowInterval}
+      showDailyDate={listState.activeListId === LIST_IDS.DEFAULT && recommendationEnds.has(index)}
     />
   )
   const getkey: FlatListType['keyExtractor'] = item => item.id

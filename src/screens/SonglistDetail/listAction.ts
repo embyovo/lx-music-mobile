@@ -1,5 +1,5 @@
-import { createList, setTempList } from '@/core/list'
-import { playList } from '@/core/player/player'
+import { addListMusics, createList, setTempList } from '@/core/list'
+import { playList, playListById } from '@/core/player/player'
 import { getListDetail, getListDetailAll } from '@/core/songlist'
 import { LIST_IDS } from '@/config/constant'
 import listState from '@/store/list/state'
@@ -10,6 +10,11 @@ import { type Source } from '@/store/songlist/state'
 const getListId = (id: string, source: LX.OnlineSource) => `${source}__${id}`
 
 export const handlePlay = async(id: string, source: Source, list?: LX.Music.MusicInfoOnline[], index = 0) => {
+  if (source === 'wy' && id === '-1' && list?.length) {
+    await addListMusics(LIST_IDS.DEFAULT, list, 'top')
+    await playListById(LIST_IDS.DEFAULT, list[index]?.id ?? list[0].id)
+    return
+  }
   const listId = getListId(id, source)
   let isPlayingList = false
   // console.log(list)

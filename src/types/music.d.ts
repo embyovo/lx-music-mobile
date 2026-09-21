@@ -22,6 +22,7 @@ declare namespace LX {
       songId: string | number // 歌曲ID，mg源为copyrightId，local为文件路径
       albumName: string // 歌曲专辑名称
       picUrl?: string | null // 歌曲图片链接
+      dailyRecommendationDate?: string // 网易云每日推荐获取日期（本地 YYYY-MM-DD）
       toggleMusicInfo?: MusicInfoOnline | null
     }
 

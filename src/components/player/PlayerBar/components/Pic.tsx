@@ -9,7 +9,7 @@ import Image from '@/components/common/Image'
 import { useCallback } from 'react'
 import { setLoadErrorPicUrl, setMusicInfo } from '@/core/player/playInfo'
 
-const PIC_HEIGHT = scaleSizeH(46)
+const PIC_HEIGHT = scaleSizeH(72)
 
 const styles = StyleSheet.create({
   image: {
@@ -45,7 +45,7 @@ export default ({ isHome }: { isHome: boolean }) => {
   }, [])
 
   return (
-    <TouchableOpacity onLongPress={handleLongPress} onPress={handlePress} activeOpacity={0.7} >
+    <TouchableOpacity style={{ marginTop: -34, marginBottom: -2, elevation: 10, shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } }} onLongPress={handleLongPress} onPress={handlePress} activeOpacity={0.7} >
       <Image url={musicInfo.pic} nativeID={NAV_SHEAR_NATIVE_IDS.playDetail_pic} style={styles.image} onError={handleError} />
     </TouchableOpacity>
   )

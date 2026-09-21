@@ -47,7 +47,7 @@ const HomeSearch = () => {
   }
   return (
     <View style={{ ...styles.homeSearch, backgroundColor: theme['c-000'] }}>
-      <Icon name="search-2" size={17} color={theme['c-400']} />
+      <Icon name="search-2" size={20} color={theme['c-400']} />
       <TextInput
         value={text}
         onChangeText={changeText}
@@ -94,10 +94,12 @@ const LeftHeader = () => {
   return (
     <View style={{
       ...styles.container,
-      height: scaleSizeH(HEADER_HEIGHT) + statusBarHeight,
-      paddingTop: statusBarHeight,
+      height: scaleSizeH(id == 'nav_songlist' ? 76 : HEADER_HEIGHT) + statusBarHeight,
+      paddingTop: statusBarHeight + (id == 'nav_songlist' ? scaleSizeH(8) : 0),
+      paddingBottom: id == 'nav_songlist' ? scaleSizeH(16) : 0,
+      ...(id == 'nav_songlist' ? { paddingRight: 20 } : {}),
     }}>
-      <View style={styles.left}>
+      <View style={[styles.left, id == 'nav_songlist' ? { paddingLeft: 20 } : null]}>
         {id == 'nav_search'
           ? <TouchableOpacity style={styles.backBtn} onPress={() => { setNavActiveId('nav_songlist') }}><Icon name="chevron-left" size={20} color={theme['c-font']} /></TouchableOpacity>
           : null}
@@ -137,10 +139,12 @@ const RightHeader = () => {
   return (
     <View style={{
       ...styles.container,
-      height: scaleSizeH(HEADER_HEIGHT) + statusBarHeight,
-      paddingTop: statusBarHeight,
+      height: scaleSizeH(id == 'nav_songlist' ? 76 : HEADER_HEIGHT) + statusBarHeight,
+      paddingTop: statusBarHeight + (id == 'nav_songlist' ? scaleSizeH(8) : 0),
+      paddingBottom: id == 'nav_songlist' ? scaleSizeH(16) : 0,
+      ...(id == 'nav_songlist' ? { paddingRight: 20 } : {}),
     }}>
-      <View style={styles.left}>
+      <View style={[styles.left, id == 'nav_songlist' ? { paddingLeft: 20 } : null]}>
         {id == 'nav_search'
           ? <TouchableOpacity style={styles.backBtn} onPress={() => { setNavActiveId('nav_songlist') }}><Icon name="chevron-left" size={20} color={theme['c-font']} /></TouchableOpacity>
           : null}
@@ -216,9 +220,9 @@ const styles = createStyle({
   },
   homeSearch: {
     flex: 1,
-    height: 36,
-    borderRadius: 20,
-    paddingHorizontal: 13,
+    height: 52,
+    borderRadius: 26,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     elevation: 1,
@@ -226,24 +230,25 @@ const styles = createStyle({
   },
   homeSearchInput: {
     flex: 1,
-    height: 36,
+    height: '100%',
     paddingVertical: 0,
-    paddingLeft: 9,
-    fontSize: 14,
+    paddingLeft: 12,
+    fontSize: 16,
+    textAlignVertical: 'center',
   },
   homeTips: {
     position: 'absolute',
     left: 0,
     right: 0,
-    top: 42,
-    borderRadius: 14,
+    top: 60,
+    borderRadius: 18,
     paddingVertical: 6,
     elevation: 12,
     overflow: 'hidden',
   },
   homeTipItem: {
-    height: 39,
-    paddingHorizontal: 15,
+    height: 46,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
   },

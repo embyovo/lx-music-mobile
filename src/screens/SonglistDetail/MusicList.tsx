@@ -8,6 +8,7 @@ import {useListInfo} from './state'
 import MyContext from "@/store/TopContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {getSyncHost} from "@/utils/data.ts";
+import { markDailyRecommendations } from '@/utils/dailyRecommendation'
 
 export interface MusicListProps {
   componentId: string
@@ -126,7 +127,7 @@ export default forwardRef<MusicListType, MusicListProps>(({ componentId }, ref) 
 
       // console.log(result)
       return {
-        list,
+        list: markDailyRecommendations(list),
         page: 1,
         limit: 30,
         total: 30,

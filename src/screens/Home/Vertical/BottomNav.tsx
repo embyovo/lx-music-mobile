@@ -32,7 +32,7 @@ const NavIcon = ({ active, icon, color, activeBackground }: { active: boolean, i
   }, [active, scale])
   return (
     <Animated.View style={[active ? { ...styles.iconActive, backgroundColor: activeBackground } : styles.icon, { transform: [{ scale }] }]}>
-      <Icon name={icon} size={20} color={color} />
+      <Icon name={icon} size={23} color={color} />
     </Animated.View>
   )
 }
@@ -56,8 +56,8 @@ const BottomNav = () => {
             activeOpacity={0.65}
             onPress={() => { setNavActiveId(item.id == 'nav_search' ? 'nav_songlist' : item.id) }}
           >
-            <NavIcon active={active} icon={item.icon} color={color} activeBackground={theme['c-primary-light-800']} />
-            <Text size={11} color={color} numberOfLines={1}>{NAV_LABELS[item.id] ?? t(item.id)}</Text>
+            <NavIcon active={active} icon={item.icon} color={color} activeBackground={theme['c-primary-alpha-900']} />
+            <Text style={styles.label} size={12} color={color} numberOfLines={1}>{NAV_LABELS[item.id] ?? t(item.id)}</Text>
           </TouchableOpacity>
         )
       })}
@@ -67,12 +67,13 @@ const BottomNav = () => {
 
 const styles = createStyle({
   container: {
-    height: 62,
+    height: 80,
     flexDirection: 'row',
     alignItems: 'center',
     borderTopWidth: 0,
     paddingHorizontal: 4,
-    paddingBottom: 2,
+    paddingTop: 6,
+    paddingBottom: 8,
   },
   item: {
     flex: 1,
@@ -81,17 +82,20 @@ const styles = createStyle({
     alignItems: 'center',
   },
   icon: {
-    height: 29,
-    minWidth: 38,
+    height: 34,
+    minWidth: 40,
     justifyContent: 'center',
     alignItems: 'center',
   },
   iconActive: {
-    height: 29,
-    minWidth: 48,
-    borderRadius: 15,
+    height: 34,
+    minWidth: 50,
+    borderRadius: 17,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  label: {
+    marginTop: 5,
   },
 })
 
