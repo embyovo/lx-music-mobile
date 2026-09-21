@@ -66,3 +66,5 @@ buck-out/
 
 # testing
 /coverage
+/android/my-release-key.jks
+/android/app/my-release-key.jks
