@@ -11,6 +11,8 @@ const handler: Omit<LX.Sync.ClientSyncHandlerActions<LX.Sync.Socket>, 'finished'
     const features: LX.Sync.EnabledFeatures = {}
     switch (serverType) {
       case 'server':
+        socket.sourceSyncEnabled = featureVersion.source == supportedFeatures.source
+        if (socket.sourceSyncEnabled) features.source = {}
         if (featureVersion.list == supportedFeatures.list) {
           features.list = { skipSnapshot: false }
         }

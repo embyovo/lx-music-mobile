@@ -14,6 +14,7 @@ export interface OnlineListProps {
   onRefresh: ListProps['onRefresh']
   onLoadMore: ListProps['onLoadMore']
   onPlayList?: ListProps['onPlayList']
+  onPlayMusic?: ListProps['onPlayMusic']
   progressViewOffset?: ListProps['progressViewOffset']
   ListHeaderComponent?: ListProps['ListHeaderComponent']
   checkHomePagerIdle?: boolean
@@ -28,6 +29,7 @@ export default forwardRef<OnlineListType, OnlineListProps>(({
   onRefresh,
   onLoadMore,
   onPlayList,
+  onPlayMusic,
   progressViewOffset,
   ListHeaderComponent,
   checkHomePagerIdle = false,
@@ -94,6 +96,7 @@ export default forwardRef<OnlineListType, OnlineListProps>(({
                   onRefresh={onRefresh}
                   onLoadMore={onLoadMore}
                   onPlayList={onPlayList}
+                  onPlayMusic={onPlayMusic}
                   progressViewOffset={progressViewOffset}
                   ListHeaderComponent={ListHeaderComponent}
                   checkHomePagerIdle={checkHomePagerIdle}
@@ -119,7 +122,10 @@ export default forwardRef<OnlineListType, OnlineListProps>(({
       <ListMusicMultiAdd ref={listMusicMultiAddRef} onAdded={() => { hancelExitSelect() }} />
       <ListMenu
         ref={listMenuRef}
-        onPlay={info => { handlePlay(info.musicInfo) }}
+        onPlay={info => {
+          if (onPlayMusic) onPlayMusic(info.musicInfo, info.index)
+          else void handlePlay(info.musicInfo)
+        }}
         onPlayLater={info => { hancelExitSelect(); handlePlayLater(info.musicInfo, info.selectedList, hancelExitSelect) }}
         onCopyName={info => { handleShare(info.musicInfo) }}
         onAdd={handleAddMusic}

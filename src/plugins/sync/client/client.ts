@@ -10,6 +10,8 @@ import { dateFormat } from '@/utils/common'
 import { createMsg2call } from 'message2call'
 import { toast } from '@/utils/tools'
 import { SYNC_CLOSE_CODE, SYNC_CODE } from '../constants'
+import { requestSourceAfterSync } from './modules/source'
+import { finishServerSourceCheck } from '@/core/sourceSync'
 
 let status: LX.Sync.Status = {
   status: false,
@@ -166,6 +168,7 @@ export const connect = (urlInfo: LX.Sync.UrlInfo, keyInfo: LX.Sync.KeyInfo) => {
           message: '',
         })
         heartbeatTools.failedNum = 0
+        requestSourceAfterSync(client!)
       },
     },
     timeout: 120 * 1000,
@@ -232,6 +235,7 @@ export const connect = (urlInfo: LX.Sync.UrlInfo, keyInfo: LX.Sync.KeyInfo) => {
     client!.moduleReadys = {
       list: false,
       dislike: false,
+      source: false,
     }
     disconnected = false
     sendSyncStatus({
@@ -240,6 +244,7 @@ export const connect = (urlInfo: LX.Sync.UrlInfo, keyInfo: LX.Sync.KeyInfo) => {
     })
   })
   client.addEventListener('close', ({ code }) => {
+    finishServerSourceCheck()
     const err = new Error('closed')
     try {
       for (const handler of closeEvents) void handler(err)

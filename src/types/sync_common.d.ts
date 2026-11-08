@@ -44,6 +44,11 @@ declare namespace LX {
       dislike_sync_finished: () => void
     }>
     type ClientSyncHandlerDislikeActions<Socket> = WarpSyncHandlerActions<Socket, ClientSyncDislikeActions>
+
+    type ClientSyncSourceActions = WarpPromiseRecord<{
+      onSourceSyncAction: (action: LX.Sync.Source.ActionSource) => void
+    }>
+    type ClientSyncHandlerSourceActions<Socket> = WarpSyncHandlerActions<Socket, ClientSyncSourceActions>
   }
 }
 

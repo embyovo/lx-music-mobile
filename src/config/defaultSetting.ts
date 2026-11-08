@@ -73,6 +73,7 @@ const defaultSetting: LX.AppSetting = {
   'download.fileName': '歌名 - 歌手',
 
   'sync.enable': false,
+  'neteaseSync.enable': false,
 
   // 'theme.id': 'blue_plus',
   'theme.id': 'green',

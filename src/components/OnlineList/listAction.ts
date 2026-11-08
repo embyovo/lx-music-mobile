@@ -1,53 +1,40 @@
 import { LIST_IDS } from '@/config/constant'
-import {addListMusics, removeListMusics} from '@/core/list'
-import { playList, playNext } from '@/core/player/player'
+import { addListMusics, removeListMusics } from '@/core/list'
+import { playListById, playNext } from '@/core/player/player'
 import { addTempPlayList } from '@/core/player/tempPlayList'
 import settingState from '@/store/setting/state'
-import { getListMusicSync } from '@/utils/listManage'
+import { getListMusics } from '@/utils/listManage'
 import { confirmDialog, openUrl, shareMusic, toast } from '@/utils/tools'
 import { addDislikeInfo, hasDislike } from '@/core/dislikeList'
 import playerState from '@/store/player/state'
 import musicSdk from '@/utils/musicSdk'
 import { toOldMusicInfo } from '@/utils'
-import songlistState from '@/store/songlist/state'
 import { clearMusicUrlByMusic } from '@/utils/data'
+import { log } from '@/utils/log'
 
-export const handlePlay = (musicInfo: LX.Music.MusicInfoOnline) => {
-  // if (boardState.listDetailInfo.source)
-  const listDetailInfo = songlistState.listDetailInfo
-  console.log('listDetailInfo', listDetailInfo)
-  if (listDetailInfo.source=='wy'&&listDetailInfo.id=='-1'){
-
-// 同步获取歌单
-    const list = getListMusicSync(LIST_IDS.DEFAULT);
-    const EXCEED_LIMIT = 520;
-
-    const selectedIds = listDetailInfo.list.map(item => item.id)
-
-    const deleteSelectedIds = list
-      .filter(item => selectedIds.includes(item.id))
-      .map(item => item.id)
-
-    const exceedIds = list.length > EXCEED_LIMIT
-      ? list.slice(EXCEED_LIMIT).map(item => item.id)
-      : []
-    const finalDeleteIds = [...new Set([...deleteSelectedIds, ...exceedIds])]
-    if (finalDeleteIds.length > 0) {
-      removeListMusics(LIST_IDS.DEFAULT, finalDeleteIds);
+let playRequestId = 0
+export const handlePlay = async(musicInfo: LX.Music.MusicInfoOnline, dailyRecommendations?: LX.Music.MusicInfoOnline[]) => {
+  const requestId = ++playRequestId
+  try {
+    // Only the daily-recommendation page may supply a batch. Other online lists
+    // always queue the clicked song, regardless of the last opened playlist.
+    const recommendations = dailyRecommendations?.some(song => song.id == musicInfo.id) ? dailyRecommendations : undefined
+    const songs = recommendations ? [...recommendations] : [musicInfo]
+    if (recommendations) {
+      const list = await getListMusics(LIST_IDS.DEFAULT)
+      if (requestId != playRequestId) return
+      const selectedIds = new Set(songs.map(song => song.id))
+      const deleteIds = list.filter((song, index) => selectedIds.has(song.id) || index >= 520).map(song => song.id)
+      if (deleteIds.length) await removeListMusics(LIST_IDS.DEFAULT, deleteIds)
     }
-    void addListMusics(LIST_IDS.DEFAULT,listDetailInfo.list,settingState.setting['list.addMusicLocationType']).then(()=>{
-      const index = getListMusicSync(LIST_IDS.DEFAULT).findIndex(m => m.id == musicInfo.id)
-      if (index < 0) return
-      void playList(LIST_IDS.DEFAULT, index)
-    })
-  }else{
-    void addListMusics(LIST_IDS.DEFAULT, [musicInfo], settingState.setting['list.addMusicLocationType']).then(() => {
-      const index = getListMusicSync(LIST_IDS.DEFAULT).findIndex(m => m.id == musicInfo.id)
-      if (index < 0) return
-      void playList(LIST_IDS.DEFAULT, index)
-    })
+    if (requestId != playRequestId) return
+    await addListMusics(LIST_IDS.DEFAULT, songs, settingState.setting['list.addMusicLocationType'])
+    if (requestId != playRequestId) return
+    await playListById(LIST_IDS.DEFAULT, musicInfo.id)
+  } catch (error) {
+    log.error('[online-list:play] Failed to start playback:', error)
+    if (requestId == playRequestId) toast(global.i18n.t('player__start_failed'), 'long')
   }
-
 }
 export const handlePlayLater = (musicInfo: LX.Music.MusicInfoOnline, selectedList: LX.Music.MusicInfoOnline[], onCancelSelect: () => void) => {
   if (selectedList.length) {

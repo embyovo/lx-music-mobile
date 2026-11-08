@@ -10,6 +10,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import {getSyncHost} from "@/utils/data.ts";
 import { markDailyRecommendations } from '@/utils/dailyRecommendation'
 import { getDominantColor } from '@/utils/colorExtractor'
+import { handlePlay as handlePlayOnlineMusic } from '@/components/OnlineList/listAction'
 
 export interface MusicListProps {
   componentId: string
@@ -281,6 +282,13 @@ export default forwardRef<MusicListType, MusicListProps>(({ componentId }, ref) 
     void handlePlay(listDetailInfo.id, listDetailInfo.source, listDetailInfo.list, index)
   }
 
+  const handlePlayMusic: OnlineListProps['onPlayMusic'] = (musicInfo) => {
+    const recommendations = info.source == 'wy' && info.id == DAILY_LIST_ID
+      ? songlistState.listDetailInfo.list
+      : undefined
+    void handlePlayOnlineMusic(musicInfo, recommendations)
+  }
+
 
   const handleRefresh: OnlineListProps['onRefresh'] = async () => {
     const page = 1
@@ -331,6 +339,7 @@ export default forwardRef<MusicListType, MusicListProps>(({ componentId }, ref) 
     <OnlineList
       ref={listRef}
       onPlayList={handlePlayList}
+      onPlayMusic={handlePlayMusic}
       onRefresh={handleRefresh}
       onLoadMore={handleLoadMore}
       ListHeaderComponent={header}

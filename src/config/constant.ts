@@ -78,6 +78,11 @@ export const storageDataPrefix = {
   dislikeList: '@dislike_list',
 
   userApi: '@user_api__',
+
+  neteaseSyncMatch: '@netease_sync_match',
+  neteaseSyncQueue: '@netease_sync_queue',
+  neteaseSyncStatus: '@netease_sync_status',
+  neteaseSyncSearch: '@netease_sync_search',
 } as const
 
 // v0.x.x 版本的 data keys
@@ -96,6 +101,9 @@ export const storageDataPrefixOld = {
 } as const
 
 export const APP_PROVIDER_NAME = 'cn.toside.music.mobile.provider'
+
+// 默认网易云同步服务地址（首次使用时回填，不覆盖用户已填写的主机）
+export const DEFAULT_SYNC_HOST = 'https://music.nas.embyovo.top'
 
 
 export const NAV_MENUS = [

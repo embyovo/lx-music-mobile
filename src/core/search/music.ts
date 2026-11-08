@@ -1,6 +1,7 @@
 import searchMusicState, { type Source } from '@/store/search/music/state'
 import searchMusicActions, { type SearchResult } from '@/store/search/music/action'
 import musicSdk from '@/utils/musicSdk'
+import { recordNeteaseSearchResults } from '@/core/neteaseSync'
 
 export const setSource: typeof searchMusicActions['setSource'] = (source) => {
   searchMusicActions.setSource(source)
@@ -41,14 +42,18 @@ export const search = async(text: string, page: number, sourceId: Source): Promi
       if (key != listInfo.key) return []
       setSearchText(text)
       setSource(sourceId)
-      return setListInfo(results, page, text)
+      const list = setListInfo(results, page, text)
+      recordNeteaseSearchResults(text, list)
+      return list
     })
   } else {
     if (listInfo?.key == key && listInfo?.list.length) return listInfo?.list
     listInfo.key = key
     return (musicSdk[sourceId]?.musicSearch.search(text, page, listInfo.limit).then((data: SearchResult) => {
       if (key != listInfo.key) return []
-      return setListInfo(data, page, text)
+      const list = setListInfo(data, page, text)
+      recordNeteaseSearchResults(text, list)
+      return list
     }) ?? Promise.reject(new Error('source not found: ' + sourceId))).catch((err: any) => {
       if (listInfo.list.length && page == 1) clearListInfo(sourceId)
       throw err

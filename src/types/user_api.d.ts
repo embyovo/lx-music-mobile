@@ -23,6 +23,11 @@ declare namespace LX {
       homepage: string
       version: string
       sources?: UserApiSources
+      syncSource?: {
+        server: string
+        md5: string
+        updateTime: number
+      }
     }
 
     interface UserApiStatus {

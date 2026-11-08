@@ -25,6 +25,7 @@ export interface ListProps {
   onRefresh: () => void
   onLoadMore: () => void
   onPlayList?: (index: number) => void
+  onPlayMusic?: (musicInfo: LX.Music.MusicInfoOnline, index: number) => void
   progressViewOffset?: number
   ListHeaderComponent?: FlatListType['ListEmptyComponent']
   checkHomePagerIdle: boolean
@@ -49,6 +50,7 @@ const List = forwardRef<ListType, ListProps>(({
   onRefresh,
   onLoadMore,
   onPlayList,
+  onPlayMusic,
   progressViewOffset,
   ListHeaderComponent,
   checkHomePagerIdle,
@@ -160,8 +162,8 @@ const List = forwardRef<ListType, ListProps>(({
         if (settingState.setting['list.isClickPlayList'] && onPlayList != null) {
           onPlayList(index)
         } else {
-          // console.log(currentList[index])
-          handlePlay(currentList[index])
+          if (onPlayMusic) onPlayMusic(item, index)
+          else void handlePlay(item)
         }
       }
     })

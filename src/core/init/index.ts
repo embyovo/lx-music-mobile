@@ -14,6 +14,8 @@ import settingState from '@/store/setting/state'
 import { checkUpdate } from '@/core/version'
 import { bootLog } from '@/utils/bootLog'
 import { cheatTip } from '@/utils/tools'
+import { beginServerSourceCheck, finishServerSourceCheck, waitForServerSourceCheck } from '@/core/sourceSync'
+import { initNeteasePlaySync } from '@/core/neteasePlaySync'
 
 let isFirstPush = true
 const handlePushedHomeScreen = async() => {
@@ -21,7 +23,7 @@ const handlePushedHomeScreen = async() => {
   if (settingState.setting['common.isAgreePact']) {
     if (isFirstPush) {
       isFirstPush = false
-      void checkUpdate()
+      void waitForServerSourceCheck().then(checkUpdate)
       void initDeeplink()
     }
   } else {
@@ -48,6 +50,12 @@ export default async() => {
   await initUserApi(setting)
   bootLog('User Api inited.')
 
+  await dataInit(setting)
+  bootLog('Data inited.')
+  if (setting['sync.enable']) beginServerSourceCheck()
+  void initSync(setting).catch(finishServerSourceCheck)
+  bootLog('Sync inited.')
+
   setApiSource(setting['common.apiSource'])
   bootLog('Api inited.')
 
@@ -55,13 +63,10 @@ export default async() => {
   bootLog('Playback Service Registered.')
   await initPlayer(setting)
   bootLog('Player inited.')
-  await dataInit(setting)
-  bootLog('Data inited.')
+  initNeteasePlaySync()
+  bootLog('Netease sync inited.')
   await initCommonState(setting)
   bootLog('Common State inited.')
-
-  void initSync(setting)
-  bootLog('Sync inited.')
 
   // syncSetting()
 

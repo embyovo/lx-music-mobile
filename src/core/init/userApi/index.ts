@@ -1,5 +1,7 @@
 import { type InitParams, onScriptAction, sendAction, type ResponseParams, type UpdateInfoParams, type RequestParams } from '@/utils/nativeModules/userApi'
 import { log, setUserApiList, setUserApiStatus } from '@/core/userApi'
+import { state as userApiState } from '@/store/userApi'
+import { waitForServerSourceCheck } from '@/core/sourceSync'
 import settingState from '@/store/setting/state'
 import BackgroundTimer from 'react-native-background-timer'
 import { fetchData } from './request'
@@ -229,7 +231,15 @@ export default async(setting: LX.AppSetting) => {
         cancelRequest(event.data, 'request canceled')
         break
       case 'showUpdateAlert':
-        showUpdateAlert(event.data)
+        {
+          const activeId = settingState.setting['common.apiSource']
+          const source = userApiState.list.find(api => api.id == activeId)
+          void waitForServerSourceCheck().then(() => {
+            if (activeId != settingState.setting['common.apiSource'] ||
+                source !== userApiState.list.find(api => api.id == activeId)) return
+            showUpdateAlert(event.data)
+          })
+        }
         break
       case 'log':
         switch ((event as unknown as { type: keyof typeof log }).type) {

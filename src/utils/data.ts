@@ -1,5 +1,5 @@
 import { getData, saveData, getAllKeys, removeDataMultiple, saveDataMultiple, removeData, getDataMultiple } from '@/plugins/storage'
-import { DEFAULT_SETTING, LIST_IDS, storageDataPrefix, type NAV_ID_Type } from '@/config/constant'
+import { DEFAULT_SETTING, DEFAULT_SYNC_HOST, LIST_IDS, storageDataPrefix, type NAV_ID_Type } from '@/config/constant'
 import { throttle } from './common'
 // import { gzip, ungzip } from '@/utils/nativeModules/gzip'
 // import { readFile, writeFile, temporaryDirectoryPath, unlink } from '@/utils/fs'
@@ -462,13 +462,15 @@ export const setSyncAuthKey = async(serverId: string, info: LX.Sync.KeyInfo) => 
 }
 
 let syncHostInfo: string
+const normalizeSyncHost = (host: string) => host.trim().replace(/\/+$/, '')
 export const getSyncHost = async() => {
   if (syncHostInfo === undefined) {
+    const stored = await getData<string>(syncHostPrefix) ?? ''
+    const raw = typeof stored == 'object' ? '' : String(stored)
     // eslint-disable-next-line require-atomic-updates
-    syncHostInfo = await getData(syncHostPrefix) ?? ''
-
-    // 清空1.0.0之前版本的同步主机
-    if (typeof syncHostInfo == 'object') syncHostInfo = ''
+    syncHostInfo = normalizeSyncHost(raw) || DEFAULT_SYNC_HOST
+    // 首次使用回填默认地址；已有地址只做去空白、去末尾斜杠的规范化
+    if (syncHostInfo !== raw) await saveData(syncHostPrefix, syncHostInfo)
   }
   return syncHostInfo
 }
@@ -476,7 +478,7 @@ export const setSyncHost = async(host: string) => {
   // let hostInfo = await getData(syncHostPrefix) || {}
   // hostInfo.host = host
   // hostInfo.port = port
-  syncHostInfo = host
+  syncHostInfo = normalizeSyncHost(host)
   await saveData(syncHostPrefix, syncHostInfo)
 }
 let syncHostHistory: string[]
@@ -551,24 +553,39 @@ const matchInfo = (scriptInfo: string) => {
 
   return infos as Record<keyof typeof INFO_NAMES, string>
 }
-export const addUserApi = async(script: string): Promise<LX.UserApi.UserApiInfo> => {
+export const getUserApiScriptInfo = (script: string) => {
   const result = /^\/\*[\S|\s]+?\*\//.exec(script)
   if (!result) throw new Error(global.i18n.t('user_api_add_failed_tip'))
-
   let scriptInfo = matchInfo(result[0])
-
   scriptInfo.name ||= `user_api_${new Date().toLocaleString()}`
-  const apiInfo: LX.UserApi.UserApiInfo = {
-    id: `user_api_${Math.random().toString().substring(2, 5)}_${Date.now()}`,
-    ...scriptInfo,
-    allowShowUpdateAlert: true,
-  }
-  userApis.push(apiInfo)
-  await saveDataMultiple([
-    [userApiPrefix, userApis],
-    [`${userApiPrefix}${apiInfo.id}`, script],
-  ])
-  return apiInfo
+  return scriptInfo
+}
+
+let userApiImportQueue = Promise.resolve()
+export const addUserApi = async(script: string, options?: Pick<LX.UserApi.UserApiInfo, 'id' | 'syncSource'>): Promise<LX.UserApi.UserApiInfo> => {
+  const task = userApiImportQueue.then(async() => {
+    const scriptInfo = getUserApiScriptInfo(script)
+    const previous = options ? userApis.find(api => api.id == options.id) : undefined
+    const apiInfo: LX.UserApi.UserApiInfo = {
+      id: options?.id ?? `user_api_${Math.random().toString().substring(2, 5)}_${Date.now()}`,
+      ...scriptInfo,
+      allowShowUpdateAlert: previous?.allowShowUpdateAlert ?? true,
+      ...(options?.syncSource ? { syncSource: options.syncSource } : {}),
+    }
+    const nextList = previous
+      ? userApis.map(api => api.id == apiInfo.id ? apiInfo : api)
+      : [...userApis, apiInfo]
+    await saveDataMultiple([
+      [userApiPrefix, nextList],
+      [`${userApiPrefix}${apiInfo.id}`, script],
+    ])
+    const index = userApis.findIndex(api => api.id == apiInfo.id)
+    if (index < 0) userApis.push(apiInfo)
+    else userApis.splice(index, 1, apiInfo)
+    return apiInfo
+  })
+  userApiImportQueue = task.then(() => {}, () => {})
+  return task
 }
 export const removeUserApi = async(ids: string[]) => {
   if (!userApis) return []

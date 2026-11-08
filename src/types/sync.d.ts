@@ -21,7 +21,9 @@ declare global {
         moduleReadys: {
           list: boolean
           dislike: boolean
+          source: boolean
         }
+        sourceSyncEnabled?: boolean
 
         onClose: (handler: (err: Error) => (void | Promise<void>)) => () => void
 
@@ -55,6 +57,7 @@ declare global {
       interface EnabledFeatures {
         list?: false | ListConfig
         dislike?: false | DislikeConfig
+        source?: false | Record<string, never>
       }
       type SupportedFeatures = Partial<{ [k in keyof EnabledFeatures]: number }>
     }

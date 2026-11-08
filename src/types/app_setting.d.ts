@@ -365,6 +365,11 @@ declare global {
        * 是否启用同步
        */
       'sync.enable': boolean
+
+      /**
+       * 是否把播放与搜索的歌曲同步到网易云（用于优化每日推荐）
+       */
+      'neteaseSync.enable': boolean
     }
   }
 }
