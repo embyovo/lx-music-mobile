@@ -210,7 +210,7 @@ export default () => {
   const dateLabel = `${now.getDate()}`
   const cards = [
     { title: 'For\nYou', label: '网易云每日推荐', date: dateLabel, desc: daily[0] ? `${daily[0].name} · ${daily[0].singer}` : '每天更新，遇见你的心动', songs: daily, color: todayPalette.color, deco: todayPalette.deco, open: openDaily },
-    { title: 'Your\nRadio', label: '猜你喜欢 · 私人 FM', desc: radio[0] ? `${radio[0].name} · ${radio[0].singer}` : '跟着直觉，发现下一首', songs: radio, color: '#6978ac', deco: 'planet', open: () => { void play(radio) } },
+    { title: 'Your\nRadio', label: '猜你喜欢 · 私人 FM', desc: radio[0] ? `${radio[0].name} · ${radio[0].singer}` : '跟着直觉，发现下一首', songs: radio, color: '#6978ac', deco: 'planet' as DecoVariant, open: () => { void play(radio) } },
   ]
   return (
     <ScrollView refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { void load(true); setPlaylistRefreshKey(value => value + 1) }} tintColor={theme['c-primary']} />} contentContainerStyle={styles.content}>
