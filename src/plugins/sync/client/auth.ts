@@ -98,10 +98,17 @@ const auth = async(urlInfo: LX.Sync.UrlInfo, serverId: string, authCode?: string
 }
 
 export default async(urlInfo: LX.Sync.UrlInfo, authCode?: string) => {
-  console.log('connect: ', urlInfo.href, authCode)
-  console.log(`${urlInfo.httpProtocol}//${urlInfo.hostPath}/hello`)
-  if (!await hello(urlInfo)) throw new Error(SYNC_CODE.connectServiceFailed)
-  const serverId = await getServerId(urlInfo)
+  // Start both read-only requests together while retaining hello's error
+  // handling and observing an early /id rejection even if hello fails first.
+  const helloRequest = hello(urlInfo)
+  const idRequest = getServerId(urlInfo).then(
+    value => ({ value }),
+    error => ({ error }),
+  )
+  if (!await helloRequest) throw new Error(SYNC_CODE.connectServiceFailed)
+  const idResult = await idRequest
+  if ('error' in idResult) throw idResult.error
+  const serverId = idResult.value
   if (!serverId) throw new Error(SYNC_CODE.getServiceIdFailed)
   return auth(urlInfo, serverId, authCode)
 }

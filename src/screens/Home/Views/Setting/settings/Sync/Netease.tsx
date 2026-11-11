@@ -16,6 +16,8 @@ import {
   clearNeteaseSyncQueue,
   flushNeteaseSyncQueue,
   getNeteaseSyncSnapshot,
+  importNeteaseSearchHistory,
+  scheduleNeteaseSyncFlush,
   type NeteaseSyncSnapshot,
 } from '@/core/neteaseSync'
 
@@ -59,7 +61,7 @@ export default memo(() => {
 
   const handleSetEnable = useCallback((enable: boolean) => {
     updateSetting({ 'neteaseSync.enable': enable })
-    if (enable) void flushNeteaseSyncQueue(true).then(refresh)
+    if (enable) void importNeteaseSearchHistory().then(() => flushNeteaseSyncQueue(true)).then(refresh)
     else void refresh()
   }, [refresh])
 
@@ -85,6 +87,7 @@ export default memo(() => {
       const cookie = data?.cookie
       if (typeof cookie !== 'string') return
       await AsyncStorage.setItem('cookie', decodeURIComponent(cookie))
+      scheduleNeteaseSyncFlush(0)
       stopPolling()
       if (isUnmountedRef.current) return
       setQrcode('')

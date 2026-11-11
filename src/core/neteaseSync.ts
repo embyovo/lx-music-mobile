@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import musicSdk from '@/utils/musicSdk'
 import { toNewMusicInfo } from '@/utils'
-import { getSyncHost } from '@/utils/data'
+import { getSearchHistory, getSyncHost } from '@/utils/data'
 import { getData, saveData } from '@/plugins/storage'
 import { storageDataPrefix } from '@/config/constant'
 import settingState from '@/store/setting/state'
@@ -46,6 +46,8 @@ export interface NeteaseMatch {
 }
 
 export interface NeteaseSyncQueueItem {
+  kind?: 'play' | 'search'
+  keyword?: string
   key: string
   songId: number
   albumId: number
@@ -91,6 +93,7 @@ let searchIntents: Record<string, SearchIntent> | null = null
 let searchIntentsLoading: Promise<Record<string, SearchIntent>> | null = null
 let queue: NeteaseSyncQueueItem[] | null = null
 let queueLoading: Promise<NeteaseSyncQueueItem[]> | null = null
+let queueMutation = Promise.resolve()
 let status: NeteaseSyncStatus | null = null
 let statusLoading: Promise<NeteaseSyncStatus> | null = null
 
@@ -134,6 +137,17 @@ const loadQueue = async() => {
 
 const saveQueue = async(data: NeteaseSyncQueueItem[]) => {
   await saveData(storageDataPrefix.neteaseSyncQueue, data)
+}
+
+// Serialize mutations and persistence, but never hold the lock during HTTP requests.
+const mutateQueue = async(change: (items: NeteaseSyncQueueItem[]) => void) => {
+  const task = queueMutation.then(async() => {
+    const items = await loadQueue()
+    change(items)
+    await saveQueue([...items])
+  })
+  queueMutation = task.catch(() => {})
+  await task
 }
 
 const loadStatus = async() => {
@@ -412,11 +426,43 @@ export const recordNeteaseSearchResults = (keyword: string, list: LX.Music.Music
 }
 
 const enqueueReport = async(item: NeteaseSyncQueueItem) => {
-  const list = await loadQueue()
-  list.push(item)
-  if (list.length > QUEUE_LIMIT) list.splice(0, list.length - QUEUE_LIMIT)
-  await saveQueue(list)
+  await mutateQueue(list => {
+    list.push(item)
+    if (list.length > QUEUE_LIMIT) list.splice(0, list.length - QUEUE_LIMIT)
+  })
   scheduleNeteaseSyncFlush(8000)
+}
+
+let nextQueueId = 0
+export const reportNeteaseSearch = (keyword: string) => {
+  keyword = keyword.trim()
+  if (!settingState.setting['neteaseSync.enable'] || !keyword) return
+  const at = Date.now()
+  void enqueueReport({
+    kind: 'search', keyword, key: `search_${at}_${++nextQueueId}`, songId: 0, albumId: 0,
+    name: keyword, singer: '', playedSeconds: 0, at, attempts: 0, nextRetryAt: 0, fromSearch: false,
+  }).catch(err => { console.warn('[neteaseSync] queue search failed', err) })
+}
+
+// Import saved search words once. They contain no timestamps, so retain their
+// order but do not invent historical search times or historical play counts.
+export const importNeteaseSearchHistory = async() => {
+  const marker = '@netease_sync_search_history_imported'
+  if (await getData<boolean>(marker)) return
+  const words = await getSearchHistory()
+  await mutateQueue(items => {
+    for (const word of words.slice().reverse()) {
+      const keyword = word.trim()
+      if (!keyword) continue
+      const key = `search_history_${keyword}`
+      if (items.some(item => item.key === key)) continue
+      items.push({ kind: 'search', keyword, key, songId: 0, albumId: 0, name: keyword,
+        singer: '', playedSeconds: 0, at: Date.now(), attempts: 0, nextRetryAt: 0, fromSearch: false })
+    }
+    if (items.length > QUEUE_LIMIT) items.splice(0, items.length - QUEUE_LIMIT)
+  })
+  await saveData(marker, true)
+  scheduleNeteaseSyncFlush(0)
 }
 
 /**
@@ -430,7 +476,7 @@ export const reportNeteasePlay = (musicInfo: LX.Music.MusicInfo, playedSeconds: 
       return
     }
     await enqueueReport({
-      key: `${match.songId}_${Date.now()}`,
+      key: `play_${match.songId}_${Date.now()}_${++nextQueueId}`,
       songId: match.songId,
       albumId: match.albumId,
       name: musicInfo.name,
@@ -454,10 +500,13 @@ const postScrobble = async(host: string, cookie: string, item: NeteaseSyncQueueI
   const controller = new AbortController()
   const timeout = setTimeout(() => { controller.abort() }, REQUEST_TIMEOUT)
   try {
-    const response = await fetch(`${host}/api/netease/scrobble`, {
+    const isSearch = item.kind === 'search'
+    const response = await fetch(`${host}/api/netease/${isSearch ? 'search' : 'scrobble'}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      headers: { 'Content-Type': 'application/json', 'x-apicache-bypass': '1' },
+      body: JSON.stringify(isSearch ? {
+        keywords: item.keyword, type: 1, limit: 1, cookie, timestamp: Date.now(),
+      } : {
         id: item.songId,
         sourceid: item.albumId || 0,
         time: item.playedSeconds,
@@ -477,7 +526,7 @@ const postScrobble = async(host: string, cookie: string, item: NeteaseSyncQueueI
       return { ok: false, auth: true, error: '网易云登录已失效或无权访问' }
     }
     if (response.status === 404 || code === 404) {
-      return { ok: false, error: '服务端未提供打卡接口 (/api/netease/scrobble)' }
+      return { ok: false, error: `服务端未提供${isSearch ? '搜索' : '打卡'}接口` }
     }
     if (!response.ok) return { ok: false, error: `上报失败 (HTTP ${response.status})` }
     if (!result || code !== 200) {
@@ -492,12 +541,18 @@ const postScrobble = async(host: string, cookie: string, item: NeteaseSyncQueueI
 }
 
 let flushTimer: ReturnType<typeof setTimeout> | null = null
+let flushAt = 0
 let isFlushing = false
 
 export const scheduleNeteaseSyncFlush = (delay = 8000) => {
-  if (!settingState.setting['neteaseSync.enable'] || flushTimer) return
+  if (!settingState.setting['neteaseSync.enable']) return
+  const at = Date.now() + delay
+  if (flushTimer && flushAt <= at) return
+  if (flushTimer) clearTimeout(flushTimer)
+  flushAt = at
   flushTimer = setTimeout(() => {
     flushTimer = null
+    flushAt = 0
     void flushNeteaseSyncQueue()
   }, delay)
 }
@@ -523,8 +578,8 @@ export const flushNeteaseSyncQueue = async(force = false): Promise<FlushResult> 
     if (!cookie) return { sent: 0, failed: 0, error: '未登录网易云' }
     if (!host) return { sent: 0, failed: 0, error: '未配置网易云服务地址' }
 
-    const list = await loadQueue()
-    const remaining: NeteaseSyncQueueItem[] = []
+    await queueMutation
+    const list = [...(await loadQueue())]
     const now = Date.now()
     let sent = 0
     let failed = 0
@@ -533,22 +588,22 @@ export const flushNeteaseSyncQueue = async(force = false): Promise<FlushResult> 
     let lastSuccessAt = 0
     let authFailed = false
 
-    for (let index = 0; index < list.length; index++) {
-      const item = list[index]
-      if (item.nextRetryAt > now) {
-        remaining.push(item)
-        continue
-      }
-      if (sent >= BATCH_SIZE) {
-        remaining.push(...list.slice(index))
-        break
-      }
+    for (const item of list) {
+      if (!settingState.setting['neteaseSync.enable'] && !force) break
+      if (!force && item.nextRetryAt > now) continue
+      if (sent + failed >= BATCH_SIZE) break
+      await queueMutation
+      if (!(await loadQueue()).some(entry => entry.key === item.key)) continue
 
       const result = await postScrobble(host, cookie, item)
       if (result.ok) {
         sent++
-        lastSuccessSong = `${item.name} - ${item.singer}`
+        lastSuccessSong = item.kind === 'search' ? `搜索：${item.keyword ?? item.name}` : `${item.name} - ${item.singer}`
         lastSuccessAt = Date.now()
+        await mutateQueue(items => {
+          const index = items.findIndex(entry => entry.key === item.key)
+          if (index >= 0) items.splice(index, 1)
+        })
         continue
       }
 
@@ -556,13 +611,15 @@ export const flushNeteaseSyncQueue = async(force = false): Promise<FlushResult> 
       lastError = result.error ?? '上报失败'
       if (result.auth) {
         authFailed = true
-        remaining.push(...list.slice(index))
         break
       }
 
-      item.attempts++
-      item.nextRetryAt = Date.now() + Math.min(300000, Math.pow(2, item.attempts) * 1000)
-      remaining.push(item)
+      await mutateQueue(items => {
+        const queued = items.find(entry => entry.key === item.key)
+        if (!queued) return
+        queued.attempts++
+        queued.nextRetryAt = Date.now() + Math.min(300000, Math.pow(2, queued.attempts) * 1000)
+      })
     }
 
     const nextStatus = await loadStatus()
@@ -574,8 +631,14 @@ export const flushNeteaseSyncQueue = async(force = false): Promise<FlushResult> 
       nextStatus.lastErrorAt = Date.now()
       nextStatus.lastError = authFailed ? '网易云登录已失效，请重新登录' : lastError
     }
-    await saveQueue(remaining)
     await saveStatus({ ...nextStatus })
+
+    await queueMutation
+    const pending = await loadQueue()
+    if (!authFailed && pending.length) {
+      const nextAttempt = Math.min(...pending.map(item => item.nextRetryAt || 0))
+      scheduleNeteaseSyncFlush(Math.max(1000, nextAttempt - Date.now()))
+    }
 
     return { sent, failed, error: nextStatus.lastErrorAt && (lastError || authFailed) ? nextStatus.lastError : undefined }
   } finally {
@@ -585,8 +648,7 @@ export const flushNeteaseSyncQueue = async(force = false): Promise<FlushResult> 
 }
 
 export const clearNeteaseSyncQueue = async() => {
-  queue = []
-  await saveQueue([])
+  await mutateQueue(items => { items.splice(0, items.length) })
 }
 
 export const getNeteaseSyncSnapshot = async(): Promise<NeteaseSyncSnapshot> => {
@@ -606,7 +668,10 @@ export const getNeteaseSyncSnapshot = async(): Promise<NeteaseSyncSnapshot> => {
 
 export const initNeteaseSync = async() => {
   await Promise.all([loadMatchCache(), loadSearchIntents(), loadQueue(), loadStatus()])
-  if (settingState.setting['neteaseSync.enable']) scheduleNeteaseSyncFlush(0)
+  if (settingState.setting['neteaseSync.enable']) {
+    await importNeteaseSearchHistory()
+    scheduleNeteaseSyncFlush(0)
+  }
 }
 
 export const isNeteaseSyncEnabled = () => settingState.setting['neteaseSync.enable']

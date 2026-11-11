@@ -13,7 +13,7 @@ import { playListById } from '@/core/player/player'
 import { COMPONENT_IDS, LIST_IDS } from '@/config/constant'
 import { usePageVisible } from '@/store/common/hook'
 import DiscoveryPlaylists from './DiscoveryPlaylists'
-import { loadDiscovery } from './discoveryData'
+import { loadDiscovery, loadDiscoveryCache } from './discoveryData'
 import CardDeco, { type DecoVariant } from './CardDeco'
 
 // 30 天每日配色 + 装饰主题（16 种装饰 × 30 种颜色，一个月内组合不重样）
@@ -89,45 +89,94 @@ export default () => {
   const [playlistRefreshKey, setPlaylistRefreshKey] = useState(0)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('正在为你寻找好音乐…')
+  const [cached, setCached] = useState(false)
   const requestRef = useRef<AbortController | null>(null)
+  const cacheIdentity = useRef('')
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const connected = useRef(false)
   const entrance = useRef(new Animated.Value(0)).current
 
-  const load = useCallback(async() => {
+  const load: (force?: boolean) => Promise<void> = useCallback(async(force = false) => {
+    if (requestRef.current && !force) return
     requestRef.current?.abort()
+    if (retryTimer.current) clearTimeout(retryTimer.current)
+    retryTimer.current = null
     const controller = new AbortController()
     requestRef.current = controller
     setLoading(true)
-    const timeout = setTimeout(() => { controller.abort() }, 15000)
+    const timeout = setTimeout(() => { controller.abort() }, 8000)
     try {
-      const result = await loadDiscovery('为你推荐', controller.signal, 'songs')
+      const request = loadDiscovery('为你推荐', controller.signal, 'songs').then(
+        result => ({ result }), error => ({ error }),
+      )
+      const local = await loadDiscoveryCache('为你推荐', 'songs')
       if (requestRef.current !== controller) return
-      setDaily(result.daily)
-      setRadio(result.radio)
+      if (cacheIdentity.current !== local.identity) {
+        cacheIdentity.current = local.identity
+        setDaily(local.daily)
+        setRadio(local.radio)
+        setCached(!!(local.daily.length || local.radio.length))
+      }
+      const response = await request
+      if ('error' in response) throw response.error
+      const result = response.result
+      if (requestRef.current !== controller) return
+      if (result.identity !== local.identity) return
+      if (result.daily.length) setDaily(result.daily)
+      if (result.radio.length) setRadio(result.radio)
+      if (result.daily.length || result.radio.length) setCached(!result.daily.length || !result.radio.length)
+      else setCached(true)
       setNeedsLogin(result.needsLogin)
       setMessage(result.message)
+      if (!result.needsLogin && (!result.dailyOk || !result.radioOk)) {
+        retryTimer.current = setTimeout(() => {
+          retryTimer.current = null
+          if (AppState.currentState === 'active' && commonState.navActiveId === 'nav_songlist') {
+            void load()
+            setPlaylistRefreshKey(value => value + 1)
+          }
+        }, 30000)
+      }
     } catch {
       if (requestRef.current === controller) setMessage('连接超时或服务不可用，请下拉重试')
     } finally {
       clearTimeout(timeout)
-      if (requestRef.current === controller) setLoading(false)
+      if (requestRef.current === controller) {
+        requestRef.current = null
+        setLoading(false)
+      }
     }
   }, [])
 
   usePageVisible([COMPONENT_IDS.home], useCallback(visible => {
-    if (visible) void load()
+    if (visible) {
+      void load()
+      setPlaylistRefreshKey(value => value + 1)
+    }
   }, [load]))
 
   useEffect(() => {
     Animated.timing(entrance, { toValue: 1, duration: 320, useNativeDriver: true }).start()
     void load()
-    const onHome = (id: string) => { if (id === 'nav_songlist') void load() }
-    const appState = AppState.addEventListener('change', state => { if (state === 'active' && commonState.navActiveId === 'nav_songlist') void load() })
+    const refreshHome = () => { void load(); setPlaylistRefreshKey(value => value + 1) }
+    const onHome = (id: string) => { if (id === 'nav_songlist') refreshHome() }
+    const appState = AppState.addEventListener('change', state => { if (state === 'active' && commonState.navActiveId === 'nav_songlist') refreshHome() })
+    const onSync: typeof global.state_event.syncStatusUpdated = status => {
+      if (status.status && !connected.current && commonState.navActiveId === 'nav_songlist') {
+        void load(true)
+        setPlaylistRefreshKey(value => value + 1)
+      }
+      connected.current = status.status
+    }
     global.state_event.on('navActiveIdUpdated', onHome)
+    global.state_event.on('syncStatusUpdated', onSync)
     return () => {
       requestRef.current?.abort()
       requestRef.current = null
+      if (retryTimer.current) clearTimeout(retryTimer.current)
       appState.remove()
       global.state_event.off('navActiveIdUpdated', onHome)
+      global.state_event.off('syncStatusUpdated', onSync)
     }
   }, [entrance, load])
 
@@ -164,7 +213,7 @@ export default () => {
     { title: 'Your\nRadio', label: '猜你喜欢 · 私人 FM', desc: radio[0] ? `${radio[0].name} · ${radio[0].singer}` : '跟着直觉，发现下一首', songs: radio, color: '#6978ac', deco: 'planet', open: () => { void play(radio) } },
   ]
   return (
-    <ScrollView refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { void load(); setPlaylistRefreshKey(value => value + 1) }} tintColor={theme['c-primary']} />} contentContainerStyle={styles.content}>
+    <ScrollView refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { void load(true); setPlaylistRefreshKey(value => value + 1) }} tintColor={theme['c-primary']} />} contentContainerStyle={styles.content}>
       <Animated.View style={{ opacity: entrance, transform: [{ translateY: entrance.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }] }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} snapToInterval={cardWidth + 14} decelerationRate="fast" contentContainerStyle={styles.carousel}>
           {cards.map(card => <TouchableOpacity key={card.label} activeOpacity={0.88} onPress={card.open} style={[styles.card, { width: cardWidth, backgroundColor: card.color }]}>
@@ -188,7 +237,7 @@ export default () => {
         </ScrollView>
         <View style={styles.section}>
           <View style={styles.heading}><Text size={23} style={styles.bold}>Hi，终于等到你</Text><TouchableOpacity accessibilityLabel="播放推荐歌曲" onPress={() => { void play(tracks) }} style={[styles.smallPlay, { backgroundColor: theme['c-content-background'] }]}><Icon name="play" size={16} color={theme['c-600']} /></TouchableOpacity></View>
-          <Text color={theme['c-500']} size={12} style={{ marginBottom: 18 }}>{radio.length ? '私人 FM · 从你的喜好出发' : '每日精选 · 让音乐陪伴此刻'}</Text>
+          <Text color={theme['c-500']} size={12} style={{ marginBottom: 18 }}>{cached ? '显示上次推荐，内容可能不是最新' : (radio.length ? '私人 FM · 从你的喜好出发' : '每日精选 · 让音乐陪伴此刻')}</Text>
           {tracks.length ? tracks.slice(0, 3).map(song => <View key={song.id} style={styles.song}>
             <TouchableOpacity style={styles.songLink} onPress={() => { void play(tracks, song) }}>
               <Image url={song.meta.picUrl} style={styles.cover} />

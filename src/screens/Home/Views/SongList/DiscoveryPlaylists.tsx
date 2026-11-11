@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ScrollView, TouchableOpacity, View } from 'react-native'
 import Text from '@/components/common/Text'
 import Image from '@/components/common/Image'
@@ -8,7 +8,7 @@ import musicSdk from '@/utils/musicSdk'
 import { getTags } from '@/core/songlist'
 import { navigations } from '@/navigation'
 import commonState from '@/store/common/state'
-import { loadDiscovery } from './discoveryData'
+import { loadDiscovery, loadDiscoveryCache } from './discoveryData'
 
 export default ({ refreshKey }: { refreshKey: number }) => {
   const theme = useTheme()
@@ -16,7 +16,10 @@ export default ({ refreshKey }: { refreshKey: number }) => {
   const [tags, setTags] = useState<TagInfoItem[]>([])
   const [list, setList] = useState<ListInfoItem[]>([])
   const [loading, setLoading] = useState(false)
+  const [cached, setCached] = useState(false)
   const [retry, setRetry] = useState(0)
+  const currentSelection = useRef('')
+  const currentIdentity = useRef('')
   useEffect(() => {
     let active = true
     setTags([])
@@ -28,22 +31,47 @@ export default ({ refreshKey }: { refreshKey: number }) => {
   useEffect(() => {
     let active = true
     const controller = new AbortController()
-    setList([])
+    const selectionKey = `${selection.source}:${selection.tag}`
+    if (currentSelection.current !== selectionKey) {
+      currentSelection.current = selectionKey
+      currentIdentity.current = ''
+      setList([])
+      setCached(false)
+    }
     setLoading(true)
-    const timer = setTimeout(() => { controller.abort(); if (active) setLoading(false) }, 15000)
+    const timer = setTimeout(() => { controller.abort(); if (active) setLoading(false) }, 8000)
     const run = async() => {
       try {
         const { source, tag } = selection
         let result: ListInfoItem[]
-        if (source === 'wy') result = (await loadDiscovery(tag || '为你推荐', controller.signal, 'playlists')).playlists
+        if (source === 'wy') {
+          const category = tag || '为你推荐'
+          const request = loadDiscovery(category, controller.signal, 'playlists').then(
+            value => ({ value }), error => ({ error }),
+          )
+          const local = await loadDiscoveryCache(category, 'playlists')
+          if (!active) return
+          if (currentIdentity.current !== local.identity) {
+            currentIdentity.current = local.identity
+            setList(local.playlists)
+            setCached(!!local.playlists.length)
+          }
+          const response = await request
+          if ('error' in response) throw response.error
+          if (response.value.identity !== local.identity) return
+          result = response.value.playlists
+        }
         else {
           const sortId = songlistState.sortList[source]?.[0]?.id
           if (!sortId) throw new Error('Source unavailable')
           const response = await musicSdk[source].songList.getList(sortId, tag, 1) as { list: ListInfoItem[] }
           result = response.list.filter(item => item.id !== '-1').slice(0, 12).map(item => ({ ...item, source }))
         }
-        if (active && !controller.signal.aborted) setList(result)
-      } catch { /* This section never clears the independent daily recommendations. */ } finally {
+        if (active && !controller.signal.aborted && result.length) {
+          setList(result)
+          setCached(false)
+        } else if (active) setCached(true)
+      } catch { if (active) setCached(true) } finally {
         clearTimeout(timer)
         if (active) setLoading(false)
       }
@@ -52,6 +80,7 @@ export default ({ refreshKey }: { refreshKey: number }) => {
     return () => { active = false; controller.abort(); clearTimeout(timer) }
   }, [selection, retry, refreshKey])
   return <>
+    {cached && list.length ? <Text size={12} color={theme['c-500']} style={{ marginBottom: 10 }}>显示上次的歌单，内容可能不是最新</Text> : null}
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingBottom: 14 }}>
       {songlistState.sources.map(source => <TouchableOpacity key={source} onPress={() => { setSelection({ source, tag: '' }) }} style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20, backgroundColor: selection.source === source ? theme['c-primary'] : theme['c-content-background'] }}><Text size={14} color={selection.source === source ? '#10251c' : theme['c-font']}>{musicSdk.sources.find(item => item.id === source)?.name ?? source}</Text></TouchableOpacity>)}
     </ScrollView>

@@ -2,7 +2,6 @@ import { action, state } from '@/store/userApi'
 import { addUserApi, getUserApiScript, removeUserApi as removeUserApiFromStore, setUserApiAllowShowUpdateAlert as setUserApiAllowShowUpdateAlertFromStore } from '@/utils/data'
 import { destroy, loadScript } from '@/utils/nativeModules/userApi'
 import { log as writeLog } from '@/utils/log'
-import { waitForServerSourceCheck } from './sourceSync'
 
 
 let loadId = 0
@@ -10,9 +9,8 @@ export const setUserApi = async(apiId: string) => {
   const id = ++loadId
   global.lx.qualityList = {}
   setUserApiStatus(false, 'initing')
-  await waitForServerSourceCheck()
-  if (id != loadId) return
-
+  // Start the saved source immediately. A newer server source will call
+  // setUserApi again; loadId prevents an older pending read from replacing it.
   const target = state.list.find(api => api.id === apiId)
   if (!target) throw new Error('api not found')
   const script = await getUserApiScript(target.id)
